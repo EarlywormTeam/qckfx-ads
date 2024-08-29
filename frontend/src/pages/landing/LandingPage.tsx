@@ -2,18 +2,13 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import FeatureList from './FeatureList';
-import Logo from './Logo';
 import VideoPlaceholder from './VideoPlaceholder';
 
 const LandingPage: React.FC = () => {
+
   return (
     <div className="h-full w-full bg-background-accent">
       <div className="w-full bg-gradient-to-b from-background-white to-background-accent pb-12 p-6">
-        <header className="flex justify-between items-center mb-12">
-          <Logo />
-          <Button variant="ghost" className="text-text-black font-bold text-md">Sign In</Button>
-        </header>
-        
         <main className="max-w-6xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-sans font-black text-center text-text-darkPrimary mb-2">
             Pixel-Perfect Photos & Videos for Your Store
