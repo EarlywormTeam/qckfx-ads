@@ -59,6 +59,7 @@ const Cell: React.FC<{ columnIndex: number; rowIndex: number; style: React.CSSPr
     <div 
       style={{...style, padding: '10px'}}
       className="cursor-pointer bg-background-white hover:bg-gray-50 transition-all duration-200 flex flex-col group rounded-b-lg shadow-sm hover:scale-105"
+      onClick={() => navigate(`/app/product/${encodeURIComponent(product.name)}`, { state: { product } })}
     >
       <div className="w-full h-32 mb-2 flex items-center justify-center overflow-hidden">
         <img 

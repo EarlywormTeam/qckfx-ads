@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/landing/LandingPage';
 import HomePage from './pages/app/home/HomePage';
+import ProductPage from './pages/app/product/ProductPage';
 import ErrorBoundary from './pages/ErrorBoundary';
 import NotFound from './pages/NotFound';
 import CreateProductPage from './pages/app/createProduct/CreateProductPage';
@@ -37,6 +38,11 @@ function App() {
             <Route path="/app" element={
               <ProtectedRoute>
                 <HomePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/product/:productName" element={
+              <ProtectedRoute>
+                <ProductPage />
               </ProtectedRoute>
             } />
             <Route path="/app/product/create" element={
