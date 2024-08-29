@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const defaultTheme = require('tailwindcss/defaultTheme')
+
 module.exports = {
   darkMode: ["class"],
   content: [
@@ -18,10 +20,24 @@ module.exports = {
     },
     extend: {
       colors: {
+        background: {
+          accent: "#CBB29D",
+          action: "#F39C12",
+	  black: "#1F1F1F",
+          DEFAULT: "#F7FAFC",
+          dark: "#2C3E50",
+          white: "#F7FAFC",
+        },
+        text: {
+          black: "#1F1F1F",
+          brand: "#CBB29D",
+          darkPrimary: "#2C3E50",
+          darkAccent: "#6A5D7B",
+          white: "#F7FAFC",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -56,6 +72,12 @@ module.exports = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      fontFamily: {
+        body: ["Montserrat", ...defaultTheme.fontFamily.sans],
+        sans: ["Montserrat", ...defaultTheme.fontFamily.sans],
+        script: ["Brush Script MT", ...defaultTheme.fontFamily.sans],
+        serif: ["Lora", ...defaultTheme.fontFamily.serif],
       },
       keyframes: {
         "accordion-down": {
