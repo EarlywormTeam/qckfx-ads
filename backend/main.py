@@ -2,19 +2,19 @@
 import os
 import json 
 from datetime import datetime, timezone
+from typing import List
 
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request, HTTPException
-from fastapi.middleware import Middleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 from workos import AsyncWorkOSClient
-from motor.motor_asyncio import AsyncIOMotorClient
-from beanie import init_beanie
 
-from models.user import User
-from models.organization import Organization, OrganizationMembership
+from models import Organization, OrganizationMembership, Product, User, init_beanie_models
 from middleware.session import SessionMiddleware
+from background_jobs.train_product_lora import train_product_lora
+import background_jobs.background_io_thread as background_io_thread
 
 load_dotenv()
 
@@ -34,22 +34,12 @@ async def verify_session(request: Request):
 
 app = FastAPI()
 
-async def init_db():
-    # MongoDB connection string
-    mongodb_url = os.getenv("MONGODB_URL")
-    
-    # Create Motor client
-    client = AsyncIOMotorClient(mongodb_url)
-    
-    # Initialize Beanie with the Motor client and your document models
-    await init_beanie(database=client.qckfx, document_models=[User, Organization, OrganizationMembership])
-
 # Modify the startup event to initialize the database
 @app.on_event("startup")
 async def startup_event():
-    await init_db()
+    await init_beanie_models()
 
-@app.get("/api/user/organizations")
+@app.get("/api/user/organization")
 async def get_user_organizations(request: Request, session: dict = Depends(verify_session)):
     user_id = session.get("user_id")
     if not user_id:
@@ -78,7 +68,7 @@ async def get_user_organizations(request: Request, session: dict = Depends(verif
     
     return {"organizations": org_data}
 
-@app.get("/api/products")
+@app.get("/api/product")
 async def get_products(request: Request, organization_id: str = None, session: dict = Depends(verify_session)):
     user_id = session.get("user_id")
     
@@ -92,7 +82,40 @@ async def get_products(request: Request, organization_id: str = None, session: d
     
     return {"products": products}
 
+class CreateProductRequest(BaseModel):
+    name: str
+    primary_image_id: str
+    primary_image_url: str
+    additional_image_ids: List[str] = Field(default_factory=list)
+    additional_image_urls: List[str] = Field(default_factory=list)
 
+@app.post("/api/product")
+async def create_product(request: CreateProductRequest, session: dict = Depends(verify_session)):
+    user_id = session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+    
+    # Get the user's organization_id
+    user = await User.get(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Create the product
+    product = await Product.create(
+        name=request.name,
+        organization_id=user.organization_id,
+        created_by_user_id=user_id,
+        primary_image_id=request.primary_image_id,
+        primary_image_url=request.primary_image_url,
+        additional_image_ids=request.additional_image_ids,
+        additional_image_urls=request.additional_image_urls,
+        model_id=None  # This will be set during the training process
+    )
+    
+    # Kick off the training process in the background
+    background_io_thread.run_async_task(train_product_lora, product)
+    
+    return {"product": product}
 
 # Ensure the 'assets' directory exists
 assets_dir = "assets"

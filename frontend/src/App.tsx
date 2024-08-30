@@ -9,6 +9,8 @@ import { Toaster } from "@/components/ui/toaster";
 import RootLayout from './layouts/RootLayout';
 import { useState, useEffect } from 'react';
 import { useCookies } from 'react-cookie';
+import { APIProvider } from './api/APIProvider';
+import { API } from './api';
 
 function App() {
   const [cookies] = useCookies(['session']);
@@ -42,33 +44,35 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <BrowserRouter>
-        <button onClick={() => setBypassAuth(!bypassAuth)}>
-          {bypassAuth ? 'Disable' : 'Enable'} Auth Bypass
-        </button>
-        <Routes>
-          <Route element={<RootLayout isLoggedIn={isLoggedIn} bypassAuth={bypassAuth} />}>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/app" element={
-              <ProtectedRoute>
-                <HomePage />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/product/:productName" element={
-              <ProtectedRoute>
-                <ProductPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/product/create" element={
-              <ProtectedRoute>
-                <CreateProductPage />
-              </ProtectedRoute>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
-        <Toaster />
-      </BrowserRouter>
+      <APIProvider api={new API()}>
+        <BrowserRouter>
+          <button onClick={() => setBypassAuth(!bypassAuth)}>
+            {bypassAuth ? 'Disable' : 'Enable'} Auth Bypass
+          </button>
+          <Routes>
+            <Route element={<RootLayout isLoggedIn={isLoggedIn} bypassAuth={bypassAuth} />}>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/app" element={
+                <ProtectedRoute>
+                  <HomePage />
+                </ProtectedRoute>
+              } />
+              <Route path="/app/product/:productName" element={
+                <ProtectedRoute>
+                  <ProductPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/app/product/create" element={
+                <ProtectedRoute>
+                  <CreateProductPage />
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+          <Toaster />
+        </BrowserRouter>
+      </APIProvider>
     </ErrorBoundary>
   )
 }
