@@ -10,7 +10,7 @@ import RootLayout from './layouts/RootLayout';
 import { useState, useEffect } from 'react';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+  const [isLoggedIn, /*setIsLoggedIn*/] = useState(() => {
     return localStorage.getItem('isLoggedIn') === 'true';
   });
   const [bypassAuth, setBypassAuth] = useState(true);

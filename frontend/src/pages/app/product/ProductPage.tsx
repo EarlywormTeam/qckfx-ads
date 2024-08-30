@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FixedSizeGrid as Grid, GridChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { z } from 'zod';
 
 const ProductSchema = z.object({
@@ -18,9 +18,9 @@ type Product = z.infer<typeof ProductSchema>;
 
 const ProductPage: React.FC = () => {
   const location = useLocation();
-  const { productName } = useParams<{ productName: string }>();
-  const [product, setProduct] = useState<Product | null>(location.state?.product || null);
-  const [loading, setLoading] = useState<boolean>(false);
+  // const { productName } = useParams<{ productName: string }>();
+  const [product, /*setProduct*/] = useState<Product | null>(location.state?.product || null);
+  const [loading, /*setLoading*/] = useState<boolean>(false);
   const [prompt, setPrompt] = useState<string>('');
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const { toast } = useToast();

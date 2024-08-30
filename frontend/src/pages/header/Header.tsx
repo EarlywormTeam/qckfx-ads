@@ -9,10 +9,9 @@ const Header: React.FC = () => {
   const isLandingPage = location.pathname === '/';
   const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
-  const handleSignIn = () => {
-    // TODO: Implement actual authentication logic
-    localStorage.setItem('isLoggedIn', 'true');
-    navigate('/app');
+  const handleSignIn = (event: React.MouseEvent) => {
+    event.preventDefault();
+    window.location.href = '/auth';
   };
 
   const handleLogoClick = () => {
