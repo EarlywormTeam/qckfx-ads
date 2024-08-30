@@ -1,9 +1,11 @@
 # Run with: uvicorn main:app --reload
 import os
 import json 
+from datetime import datetime, timezone
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import Depends, FastAPI, Request, HTTPException
+from fastapi.middleware import Middleware
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from workos import AsyncWorkOSClient
@@ -11,11 +13,24 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 
 from models.user import User
+from models.organization import Organization, OrganizationMembership
+from middleware.session import SessionMiddleware
 
 load_dotenv()
 
 REDIRECT_URI = os.getenv("WORKOS_REDIRECT_URI", "http://localhost:8000/api/hooks/workos")
 workos_client = AsyncWorkOSClient(api_key=os.getenv("WORKOS_API_KEY"), client_id=os.getenv("WORKOS_CLIENT_ID"))
+
+cookie_password = os.getenv("COOKIE_PASSWORD")
+if not cookie_password:
+    raise ValueError("COOKIE_PASSWORD environment variable is not set")
+
+session_middleware = SessionMiddleware(workos=workos_client, cookie_password=cookie_password)
+async def verify_session(request: Request):
+    await session_middleware.dispatch(request, lambda r: r)
+    if not request.state.session or not request.state.session.get("authenticated"):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return request.state.session
 
 app = FastAPI()
 
@@ -27,17 +42,57 @@ async def init_db():
     client = AsyncIOMotorClient(mongodb_url)
     
     # Initialize Beanie with the Motor client and your document models
-    # Replace `YourDocument1, YourDocument2` with your actual document models
-    await init_beanie(database=client.qckfx, document_models=[User])
+    await init_beanie(database=client.qckfx, document_models=[User, Organization, OrganizationMembership])
 
 # Modify the startup event to initialize the database
 @app.on_event("startup")
 async def startup_event():
     await init_db()
 
-@app.get("/api/home")
-async def root():
-    return {"message": "Hello World"}
+@app.get("/api/user/organizations")
+async def get_user_organizations(request: Request, session: dict = Depends(verify_session)):
+    user_id = session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+    
+    user = await User.get(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Fetch organization memberships for the user
+    memberships = await OrganizationMembership.find(OrganizationMembership.user_id == str(user.id)).to_list()
+    
+    # Fetch organizations based on the memberships
+    organization_ids = [membership.organization_id for membership in memberships]
+    organizations = await Organization.find({"_id": {"$in": organization_ids}}).to_list()
+    
+    # Format the response
+    org_data = [
+        {
+            "id": str(org.id),
+            "name": org.name,
+            "role": next((m.role for m in memberships if m.organization_id == str(org.id)), None)
+        }
+        for org in organizations
+    ]
+    
+    return {"organizations": org_data}
+
+@app.get("/api/products")
+async def get_products(request: Request, organization_id: str = None, session: dict = Depends(verify_session)):
+    user_id = session.get("user_id")
+    
+    # If no organization_id is provided, get the default organization for the user
+    if not organization_id:
+        user = await User.get(user_id)
+        organization_id = user.default_organization_id
+    
+    # Fetch products for the specified organization
+    products = await Product.find(Product.organization_id == organization_id).to_list()
+    
+    return {"products": products}
+
+
 
 # Ensure the 'assets' directory exists
 assets_dir = "assets"
@@ -82,14 +137,45 @@ async def callback(request: Request):
             user = User.from_workos(auth_response.user.model_dump())
             await user.insert()
 
+        # Fetch and store organization memberships
+        org_memberships = await workos_client.user_management.list_organization_memberships(
+            user_id=auth_response.user.id
+        )
+
+        for org_membership in org_memberships.data:
+            # Fetch the organization from WorkOS
+            organization = await workos_client.organizations.get_organization(
+                organization_id=org_membership.organization_id
+            )
+            
+            # Check if the organization exists, create if not
+            existing_org = await Organization.find_one(Organization.workos_id == organization.id)
+            if existing_org:
+                await existing_org.update_from_workos(organization.model_dump())
+            else:
+                existing_org = Organization.from_workos(organization.model_dump())
+                await existing_org.insert()
+
+            # Create or update organization membership
+            existing_membership = await OrganizationMembership.find_one(
+                OrganizationMembership.user_id == str(user.id),
+                OrganizationMembership.organization_id == str(existing_org.id)
+            )
+            if existing_membership:
+                await existing_membership.update_from_workos(org_membership.model_dump(), existing_org, user)
+            else:
+                new_membership = OrganizationMembership.from_workos(org_membership.model_dump(), user, existing_org)
+                await new_membership.insert()
+
         # Create the redirect response
         redirect = RedirectResponse(url="/app", status_code=302)
 
-        # Set session cookie
+        # Set session cookie with last_refreshed timestamp
         session_data = {
             "user_id": str(user.id),  # Convert to string
             "access_token": auth_response.access_token,
-            "refresh_token": auth_response.refresh_token
+            "refresh_token": auth_response.refresh_token,
+            "last_refreshed": datetime.now(timezone.utc).isoformat()
         }
         redirect.set_cookie(
             key="session",
