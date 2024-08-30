@@ -8,16 +8,30 @@ import CreateProductPage from './pages/app/createProduct/CreateProductPage';
 import { Toaster } from "@/components/ui/toaster";
 import RootLayout from './layouts/RootLayout';
 import { useState, useEffect } from 'react';
+import { useCookies } from 'react-cookie';
 
 function App() {
-  const [isLoggedIn, /*setIsLoggedIn*/] = useState(() => {
-    return localStorage.getItem('isLoggedIn') === 'true';
-  });
+  const [cookies] = useCookies(['session']);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [bypassAuth, setBypassAuth] = useState(true);
 
   useEffect(() => {
-    localStorage.setItem('isLoggedIn', isLoggedIn.toString());
-  }, [isLoggedIn]);
+    const checkLoginStatus = () => {
+      if (cookies.session) {
+        try {
+          const sessionData = JSON.parse(cookies.session);
+          setIsLoggedIn(!!sessionData.user_id);
+        } catch (error) {
+          console.error('Error parsing session cookie:', error);
+          setIsLoggedIn(false);
+        }
+      } else {
+        setIsLoggedIn(false);
+      }
+    };
+
+    checkLoginStatus();
+  }, [cookies.session]);
 
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (isLoggedIn || bypassAuth) {

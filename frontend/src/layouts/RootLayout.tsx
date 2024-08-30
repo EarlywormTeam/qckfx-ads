@@ -7,7 +7,7 @@ interface RootLayoutProps {
   bypassAuth: boolean;
 }
 
-const RootLayout: React.FC<RootLayoutProps> = ({ isLoggedIn, bypassAuth }) => {
+const RootLayout: React.FC<RootLayoutProps> = ({ bypassAuth }) => {
   return (
     <div className="w-full h-full">
       <Header bypassAuth={bypassAuth} />

@@ -1,18 +1,39 @@
 # Run with: uvicorn main:app --reload
 import os
+import json 
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from workos import AsyncWorkOSClient
+from motor.motor_asyncio import AsyncIOMotorClient
+from beanie import init_beanie
+
+from models.user import User
 
 load_dotenv()
 
-REDIRECT_URI = os.getenv("WORKOS_REDIRECT_URI")
+REDIRECT_URI = os.getenv("WORKOS_REDIRECT_URI", "http://localhost:8000/api/hooks/workos")
 workos_client = AsyncWorkOSClient(api_key=os.getenv("WORKOS_API_KEY"), client_id=os.getenv("WORKOS_CLIENT_ID"))
 
 app = FastAPI()
+
+async def init_db():
+    # MongoDB connection string
+    mongodb_url = os.getenv("MONGODB_URL")
+    
+    # Create Motor client
+    client = AsyncIOMotorClient(mongodb_url)
+    
+    # Initialize Beanie with the Motor client and your document models
+    # Replace `YourDocument1, YourDocument2` with your actual document models
+    await init_beanie(database=client.qckfx, document_models=[User])
+
+# Modify the startup event to initialize the database
+@app.on_event("startup")
+async def startup_event():
+    await init_db()
 
 @app.get("/api/home")
 async def root():
@@ -45,15 +66,42 @@ async def callback(request: Request):
         raise HTTPException(status_code=400, detail="No code provided")
 
     try:
-        user = await workos_client.user_management.authenticate_with_code(
+        auth_response = await workos_client.user_management.authenticate_with_code(
             code=code
         )
 
-        # Use the information in `user` for further business logic.
-        # For example, you might want to store the user in your database or set a session.
+        # Check if the user already exists in the database
+        existing_user = await User.find_one(User.workos_id == auth_response.user.id)
+        
+        if existing_user:
+            user = existing_user
+            # Update user information if needed
+            await user.update_from_workos(auth_response.user.model_dump())
+        else:
+            # Create and insert new user
+            user = User.from_workos(auth_response.user.model_dump())
+            await user.insert()
 
-        # Redirect the user to the homepage
-        return RedirectResponse(url="/app")
+        # Create the redirect response
+        redirect = RedirectResponse(url="/app", status_code=302)
+
+        # Set session cookie
+        session_data = {
+            "user_id": str(user.id),  # Convert to string
+            "access_token": auth_response.access_token,
+            "refresh_token": auth_response.refresh_token
+        }
+        redirect.set_cookie(
+            key="session",
+            value=json.dumps(session_data),
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=3600  # 1 hour, adjust as needed
+        )
+
+        # Return the response with the cookie set
+        return redirect
     except Exception as e:
         # Handle any errors that might occur during authentication
         raise HTTPException(status_code=500, detail=str(e))
