@@ -43,11 +43,11 @@ const Cell: React.FC<{ columnIndex: number; rowIndex: number; style: React.CSSPr
     // Render the "Add New Product" cell
     return (
       <div 
-        style={{...style, padding: '10px'}}
-        className="cursor-pointer bg-background-white transition-all duration-200 flex flex-col items-center justify-center group rounded-lg shadow-sm hover:scale-105"
+        style={{...style}}
+        className="cursor-pointer bg-background-white transition-all duration-200 flex flex-col items-center justify-center group rounded-lg shadow-sm hover:shadow-md"
         onClick={() => navigate('/app/product/create')} // Add this onClick handler
       >
-        <Plus size={48} className="text-text-darkPrimary" />
+        <Plus size={48} className="text-text-darkPrimary transition-transform duration-200 group-hover:scale-110" />
         <span className="mt-2 text-sm font-medium text-text-darkPrimary">Add New Product</span>
       </div>
     );
@@ -57,8 +57,8 @@ const Cell: React.FC<{ columnIndex: number; rowIndex: number; style: React.CSSPr
 
   return (
     <div 
-      style={{...style, padding: '10px'}}
-      className="cursor-pointer bg-background-white hover:bg-gray-50 transition-all duration-200 flex flex-col group rounded-b-lg shadow-sm hover:scale-105"
+      style={{...style}}
+      className="cursor-pointer bg-background-white hover:bg-gray-50 transition-all duration-200 flex flex-col group rounded-b-lg shadow-sm hover:shadow-md"
       onClick={() => navigate(`/app/product/${encodeURIComponent(product.name)}`, { state: { product } })}
     >
       <div className="w-full h-32 mb-2 flex items-center justify-center overflow-hidden">
