@@ -4,15 +4,14 @@ import Header from '../pages/header/Header';
 
 interface RootLayoutProps {
   isLoggedIn: boolean;
+  bypassAuth: boolean;
 }
 
-const RootLayout: React.FC<RootLayoutProps> = ({ isLoggedIn }) => {
+const RootLayout: React.FC<RootLayoutProps> = ({ isLoggedIn, bypassAuth }) => {
   return (
-    <div className="flex flex-col h-full w-full">
-      <Header />
-      <main className="flex-grow">
-        <Outlet context={{ isLoggedIn }} />
-      </main>
+    <div className="w-full h-full">
+      <Header bypassAuth={bypassAuth} />
+      <Outlet />
     </div>
   );
 };

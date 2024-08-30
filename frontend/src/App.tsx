@@ -33,7 +33,7 @@ function App() {
           {bypassAuth ? 'Disable' : 'Enable'} Auth Bypass
         </button>
         <Routes>
-          <Route element={<RootLayout isLoggedIn={isLoggedIn} />}>
+          <Route element={<RootLayout isLoggedIn={isLoggedIn} bypassAuth={bypassAuth} />}>
             <Route path="/" element={<LandingPage />} />
             <Route path="/app" element={
               <ProtectedRoute>
