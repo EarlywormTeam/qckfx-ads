@@ -7,11 +7,9 @@ import string
 
 class Product(Document):
     name: str
-    organization_id: str
-    created_by_user_id: str
-    primary_image_id: str
+    organization_id: PydanticObjectId 
+    created_by_user_id: PydanticObjectId
     primary_image_url: str
-    additional_image_ids: List[str] = []
     additional_image_urls: List[str] = []
     model_id: Optional[str] = None
     stage: str  # 'queued', 'in_progress', 'completed', 'error'
@@ -58,17 +56,17 @@ class Product(Document):
         instance.updated_at = now
 
     @classmethod
-    def create(cls, name: str, organization_id: str, created_by_user_id: str, 
-               primary_image_id: str, primary_image_url: str, model_id: str, 
-               additional_image_ids: Optional[List[str]] = None, 
+    def create(cls, name: str, 
+               organization_id: PydanticObjectId,
+               created_by_user_id: PydanticObjectId, 
+               primary_image_url: str, 
+               model_id: str, 
                additional_image_urls: Optional[List[str]] = None):
         return cls(
             name=name,
             organization_id=organization_id,
             created_by_user_id=created_by_user_id,
-            primary_image_id=primary_image_id,
             primary_image_url=primary_image_url,
-            additional_image_ids=additional_image_ids or [],
             additional_image_urls=additional_image_urls or [],
             model_id=model_id,
             stage="queued",

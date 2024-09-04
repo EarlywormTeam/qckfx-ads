@@ -1,3 +1,5 @@
+from .generation_job import GenerationJob
+from .generated_image import GeneratedImage
 from .organization import Organization, OrganizationMembership
 from .product import Product
 from .user import User
@@ -21,9 +23,12 @@ async def init_beanie_models():
     await init_beanie(
         database=client.qckfx,
         document_models=[
+            GenerationJob,
+            GeneratedImage,
             Organization,
             OrganizationMembership,
             Product,
             User
-        ]
+        ],
+        multiprocessing_mode=True
     )

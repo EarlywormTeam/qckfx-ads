@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useCookies } from 'react-cookie';
 import Logo from './Logo';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -18,35 +17,32 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ bypassAuth }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [cookies] = useCookies(['session']);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const isLandingPage = location.pathname === '/';
-  const [selectedOrg, setSelectedOrg] = useState<string>('');
-
-  // Mock data for organizations - replace with actual data fetching logic
-  const organizations: Organization[] = [
-    { id: '1', name: 'Org 1' },
-    { id: '2', name: 'Org 2' },
-    { id: '3', name: 'Org 3' },
-  ];
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
 
   useEffect(() => {
-    const checkLoginStatus = () => {
-      if (cookies.session) {
-        try {
-          const sessionData = JSON.parse(cookies.session);
-          setIsLoggedIn(!!sessionData.user_id);
-        } catch (error) {
-          console.error('Error parsing session cookie:', error);
+    const checkLoginStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/status', {
+          credentials: 'include' // This is important to include cookies in the request
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setOrganizations(data.organizations);
+          setSelectedOrg(data.organizations[0]);
+          setIsLoggedIn(true);
+        } else {
           setIsLoggedIn(false);
         }
-      } else {
+      } catch {
         setIsLoggedIn(false);
       }
     };
 
     checkLoginStatus();
-  }, [cookies.session]);
+  }, []); // Remove cookies.session from the dependency array
 
   const handleSignIn = (event: React.MouseEvent) => {
     event.preventDefault();
@@ -71,8 +67,8 @@ const Header: React.FC<HeaderProps> = ({ bypassAuth }) => {
       <div className="flex items-center space-x-4">
         {isLoggedIn && !isLandingPage && (
           <Select 
-            value={selectedOrg} 
-            onValueChange={setSelectedOrg}
+            value={selectedOrg?.id} 
+            onValueChange={(value) => setSelectedOrg(organizations.find(org => org.id === value) || null)}
           >
             <SelectTrigger className="w-[200px]">
               <SelectValue placeholder="Select organization" />

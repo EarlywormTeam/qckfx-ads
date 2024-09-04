@@ -1,10 +1,15 @@
 import React from 'react';
 import { ProductAPI } from './product';
+import { GenerateAPI } from './generate';
 
 export class API {
 
   createProductAPI(): ProductAPI {
     return new ProductAPI();
+  }
+
+  createGenerateAPI(): GenerateAPI {
+    return new GenerateAPI();
   }
 }
 

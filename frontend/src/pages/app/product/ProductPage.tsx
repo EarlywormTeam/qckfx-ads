@@ -1,67 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FixedSizeGrid as Grid, GridChildComponentProps } from 'react-window';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { useLocation } from 'react-router-dom';
-import { z } from 'zod';
-
-const ProductSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  imagePath: z.string(),
-  recentImages: z.array(z.string()).optional(),
-});
-
-type Product = z.infer<typeof ProductSchema>;
+import { Product } from '@/types/product';
+import { useGenerateAPI } from '@/api/generate';
 
 const ProductPage: React.FC = () => {
   const location = useLocation();
-  // const { productName } = useParams<{ productName: string }>();
   const [product, /*setProduct*/] = useState<Product | null>(location.state?.product || null);
   const [loading, /*setLoading*/] = useState<boolean>(false);
   const [prompt, setPrompt] = useState<string>('');
-  const [generatedImages, setGeneratedImages] = useState<string[]>([]);
+  const [generatedImages, setGeneratedImages] = useState<{ url: string }[]>([]);
   const { toast } = useToast();
+  const [isGenerating, setIsGenerating] = useState<boolean>(false);
+  const generateImageAPI = useGenerateAPI(); 
 
-  // useEffect(() => {
-  //   const fetchProduct = async (name: string) => {
-  //     setLoading(true);
-  //     try {
-  //       // Replace this with your actual API call
-  //       const response = await fetch(`/api/products/name/${encodeURIComponent(name)}`);
-  //       if (!response.ok) {
-  //         throw new Error('Failed to fetch product');
-  //       }
-  //       const data = await response.json();
-  //       setProduct(data);
-  //     } catch (error) {
-  //       console.error('Error fetching product:', error);
-  //       toast({
-  //         title: "Error",
-  //         description: "Failed to load product details.",
-  //         variant: "destructive",
-  //       });
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   if (location.state && 'product' in location.state) {
-  //     setProduct(location.state.product as Product);
-  //   } else if (productName) {
-  //     fetchProduct(productName);
-  //   } else {
-  //     toast({
-  //       title: "Error",
-  //       description: "No product information available.",
-  //       variant: "destructive",
-  //     });
-  //   }
-  // }, [location.state, productName, toast]);
-
-  const handleGenerateImages = () => {
+  const handleGenerateImages = useCallback(async () => {
     if (prompt.trim() === '') {
       toast({
         title: "Error",
@@ -71,19 +28,35 @@ const ProductPage: React.FC = () => {
       return;
     }
 
-    // TODO: Implement actual image generation logic here
-    console.log("Generating images with prompt:", prompt);
-    // For now, we'll just set some placeholder images
-    setGeneratedImages(['/placeholder1.jpg', '/placeholder2.jpg', '/placeholder3.jpg', '/placeholder4.jpg']);
-  };
+    setIsGenerating(true);
+    try {
+      const generationJobId = await generateImageAPI.generateProductImage(product!.id, prompt, 4);
+      const result = await generateImageAPI.pollGenerationJob(generationJobId);
+      
+      if (result.status === 'completed' && result.images) {
+        setGeneratedImages(result.images);
+      } else {
+        throw new Error('Image generation failed');
+      }
+    } catch (error) {
+      console.error('Error generating images:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate images. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [product, prompt, toast, generateImageAPI]);
 
   const Cell: React.FC<GridChildComponentProps> = ({ columnIndex, rowIndex, style }) => {
     if (!product) return null;
     const index = rowIndex * 4 + columnIndex;
-    if (index >= (product.recentImages?.length ?? 0)) return null;
+    if (index >= product.additionalImageUrls.length) return null;
     return (
       <div style={{...style, padding: '8px'}}>
-        <img src={product.recentImages?.[index]} alt={`Recent ${index + 1}`} className="w-full h-full object-cover rounded-lg shadow-md" />
+        <img src={product.additionalImageUrls[index]} alt={`Recent ${index + 1}`} className="w-full h-full object-cover rounded-lg shadow-md" />
       </div>
     );
   };
@@ -102,7 +75,7 @@ const ProductPage: React.FC = () => {
       
       <div className="mb-10">
         <img 
-          src={product.imagePath} 
+          src={product.primaryImageUrl} 
           alt={product.name} 
           className="w-56 h-56 object-contain rounded-lg shadow-lg"
         />
@@ -119,16 +92,33 @@ const ProductPage: React.FC = () => {
           <Button 
             onClick={handleGenerateImages}
             className="w-full bg-background-action text-text-white py-3"
+            disabled={isGenerating}
           >
-            Generate Images
+            {isGenerating ? 'Generating...' : 'Generate Images'}
           </Button>
         </div>
         <div className="flex-1">
-          <div className="grid grid-cols-2 gap-6">
-            {generatedImages.map((img, index) => (
-              <img key={index} src={img} alt={`Generated ${index + 1}`} className="w-full rounded-lg shadow-md" />
-            ))}
-          </div>
+          <h2 className="text-2xl font-semibold mb-4">Generated Images</h2>
+          {isGenerating ? (
+            <div className="flex items-center justify-center h-56">
+              <p>Generating images...</p>
+            </div>
+          ) : generatedImages.length > 0 ? (
+            <div className="grid grid-cols-2 gap-4">
+              {generatedImages.map((img, index) => (
+                <img 
+                  key={index} 
+                  src={img.url} 
+                  alt={`Generated ${index + 1}`} 
+                  className="w-full h-56 object-cover rounded-lg shadow-md"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-56 bg-gray-100 rounded-lg">
+              <p className="text-gray-500">No generated images yet</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -140,7 +130,7 @@ const ProductPage: React.FC = () => {
               columnCount={4}
               columnWidth={width / 4}
               height={height}
-              rowCount={Math.ceil((product.recentImages?.length ?? 0) / 4)}
+              rowCount={Math.ceil(product.additionalImageUrls.length / 4)}
               rowHeight={height / 3}
               width={width}
             >

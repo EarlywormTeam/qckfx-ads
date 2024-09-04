@@ -65,8 +65,8 @@ class Organization(Document):
 
 
 class OrganizationMembership(Document):
-    user_id: str
-    organization_id: str
+    user_id: PydanticObjectId
+    organization_id: PydanticObjectId 
     role: Dict[str, str]
     status: str
     created_at: datetime
@@ -101,8 +101,8 @@ class OrganizationMembership(Document):
     def from_workos(cls, workos_org_membership: dict, user: User, organization: Organization):
         return cls(
             workos_id=workos_org_membership["id"],
-            user_id=str(user.id),
-            organization_id=str(organization.id),
+            user_id=user.id,
+            organization_id=organization.id,
             role=workos_org_membership["role"],
             status=workos_org_membership["status"],
             created_at=datetime.fromisoformat(workos_org_membership["created_at"].rstrip('Z')),
@@ -111,8 +111,8 @@ class OrganizationMembership(Document):
 
     async def update_from_workos(self, workos_org_membership: dict, organization: Organization, user: User):
         self.workos_id = workos_org_membership["id"]
-        self.organization_id = str(organization.id)
-        self.user_id = str(user.id)
+        self.organization_id = organization.id
+        self.user_id = user.id
         self.role = workos_org_membership["role"]
         self.status = workos_org_membership["status"]
         self.updated_at = datetime.utcnow()

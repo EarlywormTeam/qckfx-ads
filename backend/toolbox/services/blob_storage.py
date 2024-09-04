@@ -1,6 +1,6 @@
 import os
 from enum import Enum
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob.aio import BlobServiceClient
 from dotenv import load_dotenv
 
 load_dotenv()

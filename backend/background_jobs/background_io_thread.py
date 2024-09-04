@@ -17,7 +17,7 @@ class BackgroundIOThread:
         self.loop.run_forever()
 
     async def _init_runloop(self):
-       await init_beanie_models()
+        await init_beanie_models()
 
     async def run_async_task(self, func, *args, **kwargs):
         coro = func(self.toolbox, *args, **kwargs)

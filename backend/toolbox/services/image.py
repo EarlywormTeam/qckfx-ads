@@ -2,12 +2,14 @@ import os
 from dotenv import load_dotenv
 import replicate
 import fal_client
+from .modal import ModalService  # Import ModalService
 
 class ImageService:
     def __init__(self):
         load_dotenv()
         self.replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
         self.fal_key = os.getenv("FAL_KEY")
+        self.modal_service = ModalService()  # Create an instance of ModalService
 
     async def remove_background(self, image_url):
         try:
@@ -64,6 +66,28 @@ class ImageService:
             return processed_result
         except Exception as e:
             raise Exception(f"Error in model fine-tuning: {str(e)}")
+
+    async def generate_images(self, prompt: str, count: int, product_id: str, gen_id: str) -> list:
+        """
+        Generate images using the Modal service.
+
+        Args:
+            prompt (str): The prompt for image generation.
+            count (int): The number of images to create in a batch.
+            product_id (str): The ID of the product.
+            gen_id (str): The generation ID.
+
+        Returns:
+            list: A list of base64-encoded image strings.
+
+        Raises:
+            Exception: If there's an error during image generation.
+        """
+        try:
+            result = await self.modal_service.generate_images(prompt, count, product_id, gen_id)
+            return result
+        except Exception as e:
+            raise Exception(f"Error in image generation: {str(e)}")
 
 # Usage example:
 # image_service = ImageService()

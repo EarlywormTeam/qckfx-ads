@@ -66,6 +66,7 @@ export default class BaseAPI {
     if (result.success) {
       return result.data;
     }
+    console.log(result.error)
 
     const errorResult = APIErrorSchema.safeParse(camelizedResponse);
     if (errorResult.success) {

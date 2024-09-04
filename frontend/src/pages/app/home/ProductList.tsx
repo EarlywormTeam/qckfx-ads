@@ -2,44 +2,18 @@ import { VariableSizeGrid as Grid } from 'react-window';
 import { useEffect, useState, useRef } from 'react';
 import { Plus } from 'lucide-react'; // Add this import for the plus icon
 import { useNavigate } from 'react-router-dom'; // Add this import
+import { Product } from '@/types/product';
 
-const PRODUCTS = [
-  {
-    id: "1",
-    name: "Bliss Can",
-    imagePath: "/crunchy/products/1.jpeg",
-    createdBy: "Megan Riggs",
-    createdDate: "8/30/2024"
-  },
-  {
-    id: "2",
-    name: "Calm Can",
-    imagePath: "/crunchy/products/2.jpeg",
-    createdBy: "Chris Wood",
-    createdDate: "8/29/2024",
-  },
-  {
-    id: "3",
-    name: "Elevate Can",
-    imagePath: "/crunchy/products/3.jpeg",
-    createdBy: "Chris Wood",
-    createdDate: "8/29/2024",
-  },
-  {
-    id: "4",
-    name: "Energize Can",
-    imagePath: "/crunchy/products/4.jpeg",
-    createdBy: "Chris Wood",
-    createdDate: "8/29/2024",
-  },
-];
+interface ProductListProps {
+  products: Product[];
+}
 
-const Cell: React.FC<{ columnIndex: number; rowIndex: number; style: React.CSSProperties }> = ({ columnIndex, rowIndex, style }) => {
+const Cell: React.FC<{ columnIndex: number; rowIndex: number; style: React.CSSProperties; products: Product[] }> = ({ columnIndex, rowIndex, style, products }) => {
   const navigate = useNavigate(); // Add this hook
   const index = rowIndex * 3 + columnIndex;
-  const product = PRODUCTS[index];
+  const product = products[index];
 
-  if (index === PRODUCTS.length) {
+  if (index === products.length) {
     // Render the "Add New Product" cell
     return (
       <div 
@@ -63,7 +37,7 @@ const Cell: React.FC<{ columnIndex: number; rowIndex: number; style: React.CSSPr
     >
       <div className="w-full h-32 mb-2 flex items-center justify-center overflow-hidden">
         <img 
-          src={product.imagePath} 
+          src={product.primaryImageUrl} 
           alt={product.name} 
           className="max-w-full max-h-full object-contain transition-transform duration-200 group-hover:scale-110" 
         />
@@ -71,15 +45,15 @@ const Cell: React.FC<{ columnIndex: number; rowIndex: number; style: React.CSSPr
       <div className="bg-background-accent p-3 rounded-b-lg flex-grow">
         <h3 className="font-bold mb-2 text-text-darkPrimary group-hover:text-text-darkPrimary/90">{product.name}</h3>
         <div className="flex flex-col text-sm text-text-primary group-hover:text-text-primary/90">
-          <span>Created By: {product.createdBy}</span>
-          <span>{product.createdDate}</span>
+          <span>Created By: {product.createdBy.name}</span>
+          <span>{new Date(product.createdAt).toLocaleDateString()}</span>
         </div>
       </div>
     </div>
   );
 };
 
-const ProductList: React.FC = () => {
+const ProductList: React.FC<ProductListProps> = ({ products }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -101,7 +75,7 @@ const ProductList: React.FC = () => {
 
   const columnCount = Math.max(1, Math.floor((containerWidth + gap) / (minCellWidth + gap)));
   const cellWidth = (containerWidth - (columnCount - 1) * gap) / columnCount;
-  const totalProducts = PRODUCTS.length + 1; // Add 1 for the "Add New Product" cell
+  const totalProducts = products.length + 1; // Add 1 for the "Add New Product" cell
   const rowCount = Math.ceil(totalProducts / columnCount);
 
   const getColumnWidth = () => cellWidth + gap;
@@ -130,7 +104,7 @@ const ProductList: React.FC = () => {
               top: rowIndex * (cellHeight + gap),
               marginTop: rowIndex === 0 ? '2rem' : '0', // Add extra spacing for the first row
             }}>
-              <Cell columnIndex={columnIndex} rowIndex={rowIndex} style={{}} />
+              <Cell columnIndex={columnIndex} rowIndex={rowIndex} style={{}} products={products} />
             </div>
           )}
         </Grid>
