@@ -1,6 +1,7 @@
 import httpx
 from fastapi import HTTPException
 import base64
+import random
 
 class ModalService:
     async def generate_images(self, prompt: str, count: int, product_id: str, gen_id: str) -> list[bytes]:
@@ -24,7 +25,8 @@ class ModalService:
             "prompt": prompt,
             "count": count,
             "product_id": product_id,
-            "gen_id": gen_id
+            "gen_id": gen_id,
+            "seed": random.randint(0, 2**32 - 1)
         }
 
         async with httpx.AsyncClient(follow_redirects=True) as client:

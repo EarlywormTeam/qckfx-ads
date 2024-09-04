@@ -63,7 +63,7 @@ image = (  # build up a Modal Image to run ComfyUI, step by step
         python_version="3.11"
     )
     .apt_install("git", "wget")  # install git to clone ComfyUI
-    .pip_install("comfy-cli==1.0.33", "python-dotenv")  # install comfy-cli
+    .pip_install("comfy-cli==1.1.6", "python-dotenv")  # install comfy-cli
     .run_commands(  # use comfy-cli to install the ComfyUI repo and its dependencies
         "comfy --skip-prompt install --nvidia",
     )
@@ -173,7 +173,7 @@ class ComfyUI:
     @modal.method()
     def infer(self, workflow_path: str = "/root/first_gen_workflow_api.json"):
         # runs the comfy run --workflow command as a subprocess
-        cmd = f"comfy run --workflow {workflow_path} --wait"
+        cmd = f"comfy run --workflow {workflow_path} --wait --timeout 1200"
         subprocess.run(cmd, shell=True, check=True)
 
         # completed workflows write output images to this directory
@@ -225,6 +225,9 @@ class ComfyUI:
 
         # give the output image a unique id per client request
         workflow_data["9"]["inputs"]["filename_prefix"] = f"{gen_id}_first_gen"
+
+        # set the seed
+        workflow_data["148"]["inputs"]["seed"] = item["seed"]
 
         # save this updated workflow to a new file
         new_workflow_file = f"{gen_id}_first_gen.json"
