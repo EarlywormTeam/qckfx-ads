@@ -845,19 +845,6 @@
       "title": "Image Registration"
     }
   },
-  "148": {
-    "inputs": {
-      "method": "canny",
-      "low_threshold": 100,
-      "high_threshold": 200,
-      "edge_thickness": 2,
-      "contrast_enhancement": 1.5
-    },
-    "class_type": "AdvancedEdgeDetectionNode",
-    "_meta": {
-      "title": "Advanced Edge Detection"
-    }
-  },
   "149": {
     "inputs": {
       "filter_size": 3,
@@ -1006,6 +993,19 @@
     "class_type": "AnyLineArtPreprocessor_aux",
     "_meta": {
       "title": "AnyLine Lineart"
+    }
+  },
+  "165": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "80",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
     }
   }
 }

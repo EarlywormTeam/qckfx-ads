@@ -8,6 +8,7 @@ class GenerationJob(Document):
     org_id: Indexed(PydanticObjectId)
     user_id: Indexed(PydanticObjectId)
     product_id: Indexed(PydanticObjectId)
+    image_group_ids: List[PydanticObjectId]
     prompt: str
     count: int = 1
     status: str = Field(default="pending")
@@ -53,13 +54,14 @@ class GenerationJob(Document):
         await self.save()
 
     @classmethod
-    def create_job(cls, org_id: PydanticObjectId, user_id: PydanticObjectId, product_id: PydanticObjectId, prompt: str, count: int):
+    def create_job(cls, org_id: PydanticObjectId, user_id: PydanticObjectId, product_id: PydanticObjectId, prompt: str, count: int, image_group_ids: List[PydanticObjectId]):
         return cls(
             org_id=org_id,
             user_id=user_id,
             product_id=product_id,
             prompt=prompt,
             count=count,
+            image_group_ids=image_group_ids,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )

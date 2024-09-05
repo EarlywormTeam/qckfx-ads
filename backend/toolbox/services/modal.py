@@ -51,3 +51,52 @@ class ModalService:
                 return decoded_images
             except httpx.RequestError as e:
                 raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
+            
+    async def refine_image(self, image_data: bytes, prompt: str, gen_id: str, noise_strength: float = 0, denoise_amount: float = 0.9) -> list[bytes]:
+        """
+        Send a request to refine an image using the Modal service.
+
+        Args:
+            image_data (bytes): The image data to refine.
+            prompt (str): The prompt for image refinement.
+            gen_id (str): The generation ID.
+            noise_strength (float, optional): The strength of noise to inject. Defaults to 0.
+            denoise_amount (float, optional): The amount of denoising to apply. Defaults to 0.9.
+
+        Returns:
+            list[bytes]: A list of refined image data.
+
+        Raises:
+            HTTPException: If the request fails or returns an unexpected status code.
+        """
+        url = "https://christopherhwood--product-shoot-comfyui-refine-object.modal.run"
+        payload = {
+            "prompt": prompt,
+            "gen_id": gen_id,
+            "noise_strength": noise_strength,
+            "denoise_amount": denoise_amount
+        }
+
+        # Encode the image data to base64
+        encoded_image = base64.b64encode(image_data).decode('utf-8')
+        payload["image"] = encoded_image
+
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            try:
+                # Timeout of 300 seconds (5 minutes) to account for potential long processing times
+                response = await client.post(url, json=payload, timeout=300.0)
+                
+                if response.status_code != 200:
+                    raise HTTPException(status_code=response.status_code, detail=f"Request failed with status code: {response.status_code}")
+
+                json_response = response.json()
+                
+                if 'images' not in json_response:
+                    raise HTTPException(status_code=500, detail="Unexpected response format: 'images' key not found")
+
+                # Decode base64 encoded images
+                decoded_images = [base64.b64decode(img) for img in json_response['images']]
+                
+                return decoded_images
+            except httpx.RequestError as e:
+                raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")

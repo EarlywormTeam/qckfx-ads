@@ -1,15 +1,19 @@
 import { Product } from '@/types/product';
+import { ImageGroup } from '@/types/generatedImage';
 import CreateProductAPI from './createAPI';
 import GetProductsAPI from './getAPI';
+import ImageGroupAPI from './imageGroupAPI';
 import { useAPI } from '@/api';
 
 export class ProductAPI {
   private createProductAPI: CreateProductAPI;
   private getProductsAPI: GetProductsAPI;
+  private imageGroupAPI: ImageGroupAPI;
 
   constructor() {
     this.createProductAPI = new CreateProductAPI();
     this.getProductsAPI = new GetProductsAPI();
+    this.imageGroupAPI = new ImageGroupAPI();
   }
 
   async createProduct(
@@ -34,6 +38,14 @@ export class ProductAPI {
     return this.getProductsAPI.getProducts(
       organizationId
     );
+  }
+
+  async getProductImageGroups(productId: string): Promise<ImageGroup[]> {
+    return this.imageGroupAPI.getProductImageGroups(productId);
+  }
+
+  async deleteImageGroup(productId: string, groupId: string): Promise<void> {
+    return this.imageGroupAPI.deleteImageGroup(productId, groupId);
   }
 }
 

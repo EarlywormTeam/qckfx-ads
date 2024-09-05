@@ -1,16 +1,13 @@
 from beanie import Document, Indexed, PydanticObjectId
+from pydantic import Field
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, Field
-
-class DeletionInfo(BaseModel):
-    time: datetime
-    user_id: str
 
 class GeneratedImage(Document):
     generation_job_id: Indexed(PydanticObjectId)
+    group_id: Indexed(PydanticObjectId)
     url: str
-    deleted: Optional[DeletionInfo] = Field(default=None)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Settings:
         name = "generated_images"
@@ -19,21 +16,19 @@ class GeneratedImage(Document):
     class Config:
         allow_population_by_field_name = True
         json_encoders = {
-            datetime: lambda v: v.isoformat(),
-            PydanticObjectId: lambda v: str(v)
+            PydanticObjectId: lambda v: str(v),
+            datetime: lambda v: v.isoformat()
         }
 
     @classmethod
-    async def create(cls, generation_job_id: PydanticObjectId, url: str):
+    async def create(cls, generation_job_id: PydanticObjectId, group_id: PydanticObjectId, url: str):
         return cls(
             generation_job_id=generation_job_id,
+            group_id=group_id,
             url=url
         )
 
-    async def mark_as_deleted(self, user_id: str):
-        self.deleted = DeletionInfo(
-            time=datetime.utcnow(),
-            user_id=user_id
-        )
-        await self.save()
+    @classmethod
+    async def before_save(cls, instance: "GeneratedImage") -> None:
+        instance.updated_at = datetime.utcnow()
 

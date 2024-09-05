@@ -143,7 +143,7 @@ app = modal.App(name="product-shoot", image=image)
     allow_concurrent_inputs=10,
     concurrency_limit=1,
     container_idle_timeout=300,
-    gpu="a100",
+    gpu="h100",
     mounts=[
         modal.Mount.from_local_file(
             Path(__file__).parent / "first_gen_workflow_api.json",
@@ -152,6 +152,10 @@ app = modal.App(name="product-shoot", image=image)
         modal.Mount.from_local_file(
             Path(__file__).parent / "refined_first_gen_workflow_api.json",
             "/root/refined_first_gen_workflow_api.json",
+        ),
+        modal.Mount.from_local_file(
+            Path(__file__).parent / "object_refining_workflow_api.json",
+            "/root/object_refining_workflow_api.json",
         ),
         modal.Mount.from_local_file(
             Path(__file__).parent / "image-registration-node.py",
@@ -251,10 +255,19 @@ class ComfyUI:
         )
         gen_id = item["gen_id"]
 
-        # insert the image to refine
-        file_name = self.find_output.local(f"{gen_id}_first_gen")
-        self.move_output_to_input.local(file_name) 
-        workflow_data["47"]["inputs"]["image"] = f"{file_name}"
+        # Decode the base64 encoded image from the request body
+        image_data = base64.b64decode(item["image"])
+
+        # Save the decoded image to a temporary file in the input directory
+        input_dir = "/root/comfy/ComfyUI/input"
+        temp_file_name = f"{gen_id}_temp_input.png"
+        temp_file_path = f"{input_dir}/{temp_file_name}"
+        
+        with open(temp_file_path, "wb") as temp_file:
+            temp_file.write(image_data)
+
+        # Use the temporary file as input for the workflow
+        workflow_data["47"]["inputs"]["image"] = temp_file_name
 
         # set the noise injection
         noise_strength = item.get("noise_strength", 0)
@@ -278,6 +291,12 @@ class ComfyUI:
 
         # Always return images as a JSON array of base64 encoded strings
         encoded_images = [base64.b64encode(img).decode('utf-8') for img in img_bytes_list]
+
+        # Clean up the temporary file
+        try:
+            os.remove(temp_file_path)
+        except OSError as e:
+            print(f"Error deleting temporary file {temp_file_path}: {e}")
         return JSONResponse(content={"images": encoded_images})
 
     @modal.web_endpoint(method="POST")
@@ -290,23 +309,50 @@ class ComfyUI:
         )
         gen_id = item["gen_id"]
 
-        # insert the image to refine
-        file_name = self.find_output.local(gen_id)
-        self.move_output_to_input.local(file_name) 
-        workflow_data["47"]["inputs"]["image"] = f"{file_name}"
+        # Decode the base64 encoded image from the request body
+        image_data = base64.b64decode(item["image"])
 
-        # give the output image a unique id per client request
+        # Save the decoded image to a temporary file in the input directory
+        input_dir = "/root/comfy/ComfyUI/input"
+        temp_file_name = f"{gen_id}_temp_input.png"
+        temp_file_path = f"{input_dir}/{temp_file_name}"
+        
+        with open(temp_file_path, "wb") as temp_file:
+            temp_file.write(image_data)
+
+        # Use the temporary file as input for the workflow
+        workflow_data["47"]["inputs"]["image"] = temp_file_name
+
+         # set the noise injection
+        noise_strength = item.get("noise_strength", 0)
+        workflow_data["158"]["inputs"]["noise_strength"] = noise_strength
+
+        denoise_amount = item.get("denoise_amount", 0.9)
+        workflow_data["17"]["inputs"]["denoise"] = denoise_amount
+
+        # Insert the prompt if it's used in this workflow
+        if "6" in workflow_data and "inputs" in workflow_data["6"]:
+            workflow_data["6"]["inputs"]["text"] = item.get("prompt", "")
+
+        # Give the output image a unique id per client request
         workflow_data["165"]["inputs"]["filename_prefix"] = f"{gen_id}_refine_object"
 
-        # save this updated workflow to a new file
+        # Save this updated workflow to a new file
         new_workflow_file = f"{gen_id}_refine_object.json"
         json.dump(workflow_data, Path(new_workflow_file).open("w"))
 
-        # run inference on the currently running container
+        # Run inference on the currently running container
         img_bytes_list = self.infer.local(new_workflow_file)
 
         # Always return images as a JSON array of base64 encoded strings
         encoded_images = [base64.b64encode(img).decode('utf-8') for img in img_bytes_list]
+
+        # Clean up the temporary file
+        try:
+            os.remove(temp_file_path)
+        except OSError as e:
+            print(f"Error deleting temporary file {temp_file_path}: {e}")
+
         return JSONResponse(content={"images": encoded_images})
 
 # ### The workflow for developing workflows

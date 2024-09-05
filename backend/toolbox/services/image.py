@@ -89,6 +89,29 @@ class ImageService:
         except Exception as e:
             raise Exception(f"Error in image generation: {str(e)}")
 
+    async def refine_image(self, image_data: bytes, prompt: str, gen_id: str, noise_strength: float = 0, denoise_amount: float = 0.9) -> list[bytes]:
+        """
+        Refine an image using the Modal service.
+
+        Args:
+            image_data (bytes): The image data to refine.
+            prompt (str): The prompt for image refinement.
+            gen_id (str): The generation ID.
+            noise_strength (float, optional): The strength of noise to inject. Defaults to 0.
+            denoise_amount (float, optional): The amount of denoising to apply. Defaults to 0.9.
+
+        Returns:
+            list[bytes]: A list of refined image data.
+
+        Raises:
+            Exception: If there's an error during image refinement.
+        """
+        try:
+            result = await self.modal_service.refine_image(image_data, prompt, gen_id, noise_strength, denoise_amount)
+            return result
+        except Exception as e:
+            raise Exception(f"Error in image refinement: {str(e)}")
+
 # Usage example:
 # image_service = ImageService()
 # result = await image_service.remove_background("https://example.com/image.jpg")

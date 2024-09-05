@@ -40,6 +40,11 @@ class BlobStorageService:
         blob_client = self.get_blob_client(blob_name, container_name)
         await blob_client.download_blob().readinto(stream)
 
+    async def download_blob(self, blob_name, container_name: ContainerName = None):
+        blob_client = self.get_blob_client(blob_name, container_name)
+        blob_data = await blob_client.download_blob()
+        return await blob_data.readall()
+
     async def delete_blob(self, blob_name, container_name: ContainerName = None):
         blob_client = self.get_blob_client(blob_name, container_name)
         await blob_client.delete_blob()

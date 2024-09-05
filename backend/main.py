@@ -6,6 +6,7 @@ from typing import List
 import time
 
 from beanie import PydanticObjectId
+from beanie.operators import In
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse
@@ -14,9 +15,10 @@ from pydantic import BaseModel, Field
 from workos import AsyncWorkOSClient
 
 from api.response_types.product import ProductResponse, ProductsListResponse
-from models import GenerationJob, GeneratedImage, Organization, OrganizationMembership, Product, User, init_beanie_models
+from models import GenerationJob, GeneratedImage, GeneratedImageGroup, Organization, OrganizationMembership, Product, User, init_beanie_models
 from middleware.session import SessionMiddleware
 from background_jobs.generate_product_image.background_generate_product_image import background_generate_product_image
+from background_jobs.refine_product_image.background_refine_product_image import background_refine_product_image
 from background_jobs.train_product_lora import train_product_lora
 import background_jobs.background_io_thread as background_io_thread
 
@@ -150,6 +152,16 @@ async def generate_product_image(product_id: str, body: GenerateProductImageRequ
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
+    # Create new image groups, one for each count
+    image_groups = []
+    for _ in range(body.count):
+        image_group = await GeneratedImageGroup.create(
+            organization_id=product.organization_id,
+            product_id=product.id,
+        )
+        image_group = await image_group.insert()
+        image_groups.append(image_group)
+    
     # Create a new generation job
     generation_job = GenerationJob.create_job(
         org_id=product.organization_id,
@@ -157,13 +169,67 @@ async def generate_product_image(product_id: str, body: GenerateProductImageRequ
         product_id=PydanticObjectId(product_id),
         prompt=body.prompt,
         count=body.count,
+        image_group_ids=[group.id for group in image_groups]
     )
     generation_job = await generation_job.insert()
 
-    # Kick off the training process in the background
-    asyncio.create_task(background_io_thread.run_async_task(background_generate_product_image, body.prompt, body.count, str(product.id), str(generation_job.id)))
+    # Kick off the generation process in the background
+    asyncio.create_task(background_io_thread.run_async_task(
+        background_generate_product_image,
+        body.prompt,
+        body.count,
+        product.id,
+        generation_job.id,
+        [group.id for group in image_groups]
+    ))
     
-    return {"generation_job_id": str(generation_job.id)}
+    return {
+        "generation_job_id": str(generation_job.id),
+        "image_group_ids": [str(group.id) for group in image_groups]
+    }
+
+class RefineImageRequestBody(BaseModel):
+    prompt: str
+    noise_strength: float = 0
+    denoise_amount: float = 0.9
+
+@app.post("/api/image_group/{image_group_id}/image/{image_id}/refine")
+async def refine_image(image_group_id: str, image_id: str, body: RefineImageRequestBody, session: dict = Depends(verify_session)):
+    image_group = await GeneratedImageGroup.get(image_group_id)
+    if not image_group:
+        raise HTTPException(status_code=404, detail="Image group not found")
+
+    image = await GeneratedImage.get(image_id)
+    if not image or image.group_id != image_group.id:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    # Create a new generation job for refinement
+    generation_job = GenerationJob.create_job(
+        org_id=image_group.organization_id,
+        user_id=PydanticObjectId(session.get("user_id")),
+        product_id=image_group.product_id,
+        prompt=body.prompt,
+        count=1,
+        image_group_ids=[image_group.id]
+    )
+    generation_job = await generation_job.insert()
+
+    # Kick off the refinement process in the background
+    asyncio.create_task(background_io_thread.run_async_task(
+        background_refine_product_image,
+        image_group.id,
+        image.id,
+        body.prompt,
+        generation_job.id,
+        body.noise_strength,
+        body.denoise_amount
+    ))
+
+    return {
+        "generation_job_id": str(generation_job.id),
+        "image_group_id": str(image_group.id),
+        "image_id": str(image.id)
+    }
 
 @app.get("/api/generation/{generation_job_id}")
 async def get_generation_job(generation_job_id: str):
@@ -176,10 +242,69 @@ async def get_generation_job(generation_job_id: str):
     response = {"generation_job": generation_job}
     
     if generation_job.status == "completed":
-        generated_images = await GeneratedImage.find(GeneratedImage.generation_job_id == generation_job.id).to_list()
-        response["generated_images"] = [{"url": image.url} for image in generated_images]
+        # Fetch all image groups associated with this generation job
+        image_groups = await GeneratedImageGroup.find(
+            In(GeneratedImageGroup.id, generation_job.image_group_ids)
+        ).to_list()
+        
+        response["image_groups"] = []
+        
+        for group in image_groups:
+            # Fetch all images for each group
+            generated_images = await GeneratedImage.find(
+                GeneratedImage.group_id == group.id
+            ).to_list()
+            
+            group_data = {
+                "id": str(group.id),
+                "created_at": group.created_at.isoformat(),
+                "updated_at": group.updated_at.isoformat(),
+                "images": [{"url": image.url, "created_at": image.created_at.isoformat(), "id": str(image.id)} for image in generated_images]
+            }
+            response["image_groups"].append(group_data)
     
     return response
+
+# Add a new endpoint to get image groups for a product
+@app.get("/api/product/{product_id}/image-groups")
+async def get_product_image_groups(product_id: str, session: dict = Depends(verify_session)):
+    product = await Product.get(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    image_groups = await GeneratedImageGroup.find(
+        GeneratedImageGroup.product_id == product.id,
+        GeneratedImageGroup.deleted == None
+    ).to_list()
+    
+    response = []
+    for group in image_groups:
+        images = await GeneratedImage.find(GeneratedImage.group_id == group.id).to_list()
+        response.append({
+            "id": str(group.id),
+            "created_at": group.created_at.isoformat(),
+            "updated_at": group.updated_at.isoformat(),
+            "images": [{"url": image.url, "created_at": image.created_at.isoformat(), "id": str(image.id)} for image in images]
+        })
+    
+    return {"image_groups": response}
+
+@app.delete("/api/product/{product_id}/image-group/{group_id}")
+async def delete_image_group(product_id: str, group_id: str, session: dict = Depends(verify_session)):
+    product = await Product.get(product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    image_group = await GeneratedImageGroup.get(group_id)
+    if not image_group:
+        raise HTTPException(status_code=404, detail="Image group not found")
+    
+    if image_group.product_id != product.id:
+        raise HTTPException(status_code=403, detail="Image group does not belong to this product")
+    
+    await image_group.mark_as_deleted(session["user_id"])
+    
+    return {"message": "Image group deleted successfully"}
 
 # Ensure the 'assets' directory exists
 assets_dir = "assets"

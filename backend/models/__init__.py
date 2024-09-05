@@ -1,5 +1,6 @@
 from .generation_job import GenerationJob
 from .generated_image import GeneratedImage
+from .generated_image_group import GeneratedImageGroup
 from .organization import Organization, OrganizationMembership
 from .product import Product
 from .user import User
@@ -25,6 +26,7 @@ async def init_beanie_models():
         document_models=[
             GenerationJob,
             GeneratedImage,
+            GeneratedImageGroup,
             Organization,
             OrganizationMembership,
             Product,
