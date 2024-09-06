@@ -190,8 +190,6 @@ async def generate_product_image(product_id: str, body: GenerateProductImageRequ
 
 class RefineImageRequestBody(BaseModel):
     prompt: str
-    noise_strength: float = 0
-    denoise_amount: float = 0.9
 
 @app.post("/api/image_group/{image_group_id}/image/{image_id}/refine")
 async def refine_image(image_group_id: str, image_id: str, body: RefineImageRequestBody, session: dict = Depends(verify_session)):
@@ -220,9 +218,7 @@ async def refine_image(image_group_id: str, image_id: str, body: RefineImageRequ
         image_group.id,
         image.id,
         body.prompt,
-        generation_job.id,
-        body.noise_strength,
-        body.denoise_amount
+        generation_job.id
     ))
 
     return {
@@ -441,7 +437,7 @@ async def callback(request: Request):
             httponly=True,
             secure=True,
             samesite="lax",
-            max_age=3600  # 1 hour, adjust as needed
+            max_age=172800  # 2 days
         )
 
         # Return the response with the cookie set

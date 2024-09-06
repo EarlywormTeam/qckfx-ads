@@ -2,7 +2,7 @@ from beanie import PydanticObjectId
 from models import GenerationJob, GeneratedImage, GeneratedImageGroup
 from toolbox import Toolbox
 
-async def background_refine_product_image(toolbox: Toolbox, image_group_id: PydanticObjectId, image_id: PydanticObjectId, prompt: str, generation_job_id: PydanticObjectId, noise_strength: float = 0, denoise_amount: float = 0.9):
+async def background_refine_product_image(toolbox: Toolbox, image_group_id: PydanticObjectId, image_id: PydanticObjectId, prompt: str, generation_job_id: PydanticObjectId):
     try:
         # Get the generation job and image group from the database
         generation_job = await GenerationJob.get(generation_job_id)
@@ -31,9 +31,7 @@ async def background_refine_product_image(toolbox: Toolbox, image_group_id: Pyda
         refined_image_data = await image_service.refine_image(
             original_image_data, 
             prompt, 
-            str(generation_job_id),
-            noise_strength,
-            denoise_amount
+            str(generation_job_id)
         )
 
         # Upload the refined image to blob storage

@@ -52,7 +52,7 @@ class ModalService:
             except httpx.RequestError as e:
                 raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
             
-    async def refine_image(self, image_data: bytes, prompt: str, gen_id: str, noise_strength: float = 0, denoise_amount: float = 0.9) -> list[bytes]:
+    async def refine_image(self, image_data: bytes, prompt: str, gen_id: str) -> list[bytes]:
         """
         Send a request to refine an image using the Modal service.
 
@@ -71,10 +71,9 @@ class ModalService:
         """
         url = "https://christopherhwood--product-shoot-comfyui-refine-object.modal.run"
         payload = {
-            "prompt": prompt,
+            "prompt": 'A photo of a can of Calm Crunchy sparkling water. From top to bottom, the label reads "SPARKLING ADAPTOGENIC WATER" around the white strip at the top, then on the blue background: "CRUNCHY", logo, "HYDRATION", "CALM", "watermelon", "vegan & gluten-free", "12 FL OZ (355 ML)"',
             "gen_id": gen_id,
-            "noise_strength": noise_strength,
-            "denoise_amount": denoise_amount
+            "seed": random.randint(0, 2**32 - 1),
         }
 
         # Encode the image data to base64
@@ -94,6 +93,7 @@ class ModalService:
                 if 'images' not in json_response:
                     raise HTTPException(status_code=500, detail="Unexpected response format: 'images' key not found")
 
+                print(f"received {len(json_response['images'])} images")
                 # Decode base64 encoded images
                 decoded_images = [base64.b64decode(img) for img in json_response['images']]
                 

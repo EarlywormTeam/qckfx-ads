@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { useLocation } from 'react-router-dom';
 import { Product } from '@/types/product';
 import { useGenerateAPI } from '@/api/generate';
-import { Trash2, RefreshCw, Maximize2, ChevronLeft, ChevronRight, Lightbulb, Infinity, Target, X, Loader2, ZoomIn, ZoomOut } from 'lucide-react';
+import { Trash2, RefreshCw, Maximize2, ChevronLeft, ChevronRight, Lightbulb, Infinity, Target, X, Loader2, ZoomIn, ZoomOut, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { ImageGroup } from '@/types/generatedImage';
 import { useProductAPI } from '@/api/product';
 
@@ -97,31 +97,14 @@ const ProductPage: React.FC = () => {
   }, [product, productAPI, toast]);
 
   const handleRefine = useCallback(async (group: ImageGroup) => {
-    const mostRecentImage = getMostRecentImage(group);
+    const currentImage = group.images[currentVersion];
     setIsGenerating(true);
-
-    // Determine noise and denoise values based on image count
-    const imageCount = group.images.length;
-    let noiseStrength = 0;
-    let denoiseAmount = imageCount === 1 ? 0.95 : 0.9;
-    if (imageCount == 1) {
-      noiseStrength = 2.0
-      denoiseAmount = 0.95
-    } else if (imageCount == 2) {
-      noiseStrength = 1.5
-      denoiseAmount = 0.93
-    } else {
-      noiseStrength = 0
-      denoiseAmount = 0.9
-    }
 
     try {
       const result = await generateImageAPI.refineImage(
         group.id,
-        mostRecentImage.id,
-        "A blue Calm Crunchy sparkling water can, the words from top to bottom read: 'SPARKLING ADAPTOGENIC WATER', 'CRUNCHY', logo, 'HYDRATION', 'CALM', 'watermelon', 'vegan & gluten-free', '12 FL OZ (355 ML)",
-        noiseStrength,
-        denoiseAmount
+        currentImage.id,
+        prompt,
       );
 
       // Poll for the refined image
@@ -153,7 +136,7 @@ const ProductPage: React.FC = () => {
     } finally {
       setIsGenerating(false);
     }
-  }, [generateImageAPI, toast, fullscreenGroup]);
+  }, [generateImageAPI, toast, fullscreenGroup, currentVersion, prompt]);
 
   const handleFullScreenVersions = (group: ImageGroup, index: number) => {
     setFullscreenGroup(group);
@@ -223,6 +206,26 @@ const ProductPage: React.FC = () => {
     setFullscreenGroup(generatedImageGroups[newIndex]);
     setCurrentVersion(generatedImageGroups[newIndex].images.length - 1);
   };
+
+  const handleDownload = useCallback((imageUrl: string, filename: string) => {
+    fetch(imageUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(() => toast({
+        title: "Error",
+        description: "Failed to download image. Please try again.",
+        variant: "destructive",
+      }));
+  }, [toast]);
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
@@ -345,8 +348,11 @@ const ProductPage: React.FC = () => {
                             <Button variant="ghost" size="sm" onClick={() => handleRefine(group)} className="mr-2">
                               <RefreshCw size={20} className="text-white" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleFullScreenVersions(group, index)}>
+                            <Button variant="ghost" size="sm" onClick={() => handleFullScreenVersions(group, index)} className="mr-2">
                               <Maximize2 size={20} className="text-white" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownload(getMostRecentImage(group).url, `image_${group.id}.png`)}>
+                              <Download size={20} className="text-white" />
                             </Button>
                           </div>
                         </div>
@@ -433,14 +439,14 @@ const ProductPage: React.FC = () => {
       {/* Full-screen version history */}
       {fullscreenGroup && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center"
+          className="fixed inset-0 bg-background-black bg-opacity-90 z-50 flex items-center justify-center"
           onClick={handleFullScreenClick}
         >
           <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
             <Button 
               variant="ghost" 
               onClick={handleCloseFullScreen} 
-              className="absolute top-4 right-4 text-white"
+              className="absolute top-4 right-4 text-text-white hover:bg-background-dark/20"
             >
               <X size={24} />
             </Button>
@@ -448,7 +454,7 @@ const ProductPage: React.FC = () => {
               <Button 
                 onClick={() => handleFullScreenNavigation('prev')} 
                 disabled={currentGroupIndex === 0}
-                className="text-white"
+                className="text-text-black bg-background-white hover:bg-background-accent/20"
               >
                 <ChevronLeft size={20} />
               </Button>
@@ -476,50 +482,66 @@ const ProductPage: React.FC = () => {
               <Button 
                 onClick={() => handleFullScreenNavigation('next')} 
                 disabled={currentGroupIndex === generatedImageGroups.length - 1}
-                className="text-white"
+                className="text-text-black bg-background-white hover:bg-background-accent/20"
               >
                 <ChevronRight size={20} />
               </Button>
             </div>
-            <div className="flex items-center justify-between mb-4 text-white">
-              <div className="flex items-center">
-                <span className="mr-2">Version: {currentVersion + 1}</span>
-                <Slider
-                  value={[currentVersion]}
-                  max={fullscreenGroup.images.length - 1}
-                  step={1}
-                  className="w-48"
-                  onValueChange={handleVersionChange}
-                />
-                <span className="ml-2">of {fullscreenGroup.images.length}</span>
+            <div className="flex flex-col space-y-4 text-text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="mr-2">Version: {currentVersion + 1}</span>
+                  <Slider
+                    value={[currentVersion]}
+                    max={fullscreenGroup.images.length - 1}
+                    step={1}
+                    className="w-48"
+                    onValueChange={handleVersionChange}
+                  />
+                  <span className="ml-2">of {fullscreenGroup.images.length}</span>
+                </div>
+                <div className="flex items-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleZoom('out')}
+                    disabled={zoomLevel === 1}
+                    className="mr-2 text-text-white border-text-white bg-background-dark/50 hover:bg-background-dark/70"
+                  >
+                    <ZoomOut size={20} />
+                  </Button>
+                  <span className="mx-2">{Math.round(zoomLevel * 100)}%</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleZoom('in')}
+                    disabled={zoomLevel === 3}
+                    className="ml-2 text-text-white border-text-white bg-background-dark/50 hover:bg-background-dark/70"
+                  >
+                    <ZoomIn size={20} />
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleZoom('out')}
-                  disabled={zoomLevel === 1}
-                  className="mr-2"
+              
+              <div className="flex justify-between">
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleDownload(fullscreenGroup.images[currentVersion].url, `image_${fullscreenGroup.id}_v${currentVersion + 1}.png`)}
+                  className="text-text-white border-text-white bg-background-dark/50 hover:bg-background-dark/70"
                 >
-                  <ZoomOut size={20} />
+                  <Download size={20} className="mr-2" /> Download This Version
                 </Button>
-                <span className="mx-2">{Math.round(zoomLevel * 100)}%</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleZoom('in')}
-                  disabled={zoomLevel === 3}
-                  className="ml-2"
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleRefine(fullscreenGroup)}
+                  className="text-text-white border-text-white bg-background-dark/50 hover:bg-background-dark/70"
+                  disabled={isGenerating}
                 >
-                  <ZoomIn size={20} />
+                  {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw size={20} className="mr-2" />}
+                  {isGenerating ? 'Refining...' : 'Refine'}
                 </Button>
+                <Button className="bg-background-action text-text-black hover:bg-background-action/80">Use This Version</Button>
               </div>
-            </div>
-            <div className="flex justify-between">
-              <Button variant="outline" onClick={() => handleRefine(fullscreenGroup)} className="text-white">
-                <RefreshCw size={20} className="mr-2" /> Refine This Version
-              </Button>
-              <Button className="bg-white text-black">Use This Version</Button>
             </div>
           </div>
         </div>

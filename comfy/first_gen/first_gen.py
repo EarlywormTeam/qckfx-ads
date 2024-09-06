@@ -111,22 +111,22 @@ app = modal.App(name="product-shoot", image=image)
 ## Running ComfyUI interactively and as an API on Modal
 
 # To run ComfyUI interactively, simply wrap the `comfy launch` command in a Modal Function and serve it as a web server.
-# @app.function(
-#     allow_concurrent_inputs=10,
-#     concurrency_limit=1,
-#     container_idle_timeout=30,
-#     timeout=1800,
-#     gpu="a100",
-#     mounts=[
-#         modal.Mount.from_local_file(
-#             Path(__file__).parent / "image-registration-node.py",
-#             "/root/comfy/ComfyUI/custom_nodes/image-registration-node.py"
-#         ),
-#     ],
-# )
-# @modal.web_server(8000, startup_timeout=180)
-# def ui():
-#     subprocess.Popen("comfy launch -- --listen 0.0.0.0 --port 8000", shell=True)
+@app.function(
+    allow_concurrent_inputs=10,
+    concurrency_limit=1,
+    container_idle_timeout=30,
+    timeout=1800,
+    gpu="a100",
+    mounts=[
+        modal.Mount.from_local_file(
+            Path(__file__).parent / "image-registration-node.py",
+            "/root/comfy/ComfyUI/custom_nodes/image-registration-node.py"
+        ),
+    ],
+)
+@modal.web_server(8000, startup_timeout=180)
+def ui():
+    subprocess.Popen("comfy launch -- --listen 0.0.0.0 --port 8000", shell=True)
 
 # Remember to **close your UI tab** when you are done developing to avoid accidental charges to your account.
 # This will close the connection with the container serving ComfyUI, which will spin down based on your `container_idle_timeout` setting.
@@ -154,8 +154,8 @@ app = modal.App(name="product-shoot", image=image)
             "/root/refined_first_gen_workflow_api.json",
         ),
         modal.Mount.from_local_file(
-            Path(__file__).parent / "object_refining_workflow_api.json",
-            "/root/object_refining_workflow_api.json",
+            Path(__file__).parent / "object_refine_workflow_api.json",
+            "/root/object_refine_workflow_api.json",
         ),
         modal.Mount.from_local_file(
             Path(__file__).parent / "image-registration-node.py",
@@ -190,9 +190,11 @@ class ComfyUI:
             if node.get("class_type") == "SaveImage"
         ][0]["filename_prefix"]
 
+        print(f"looking for file prefix: {file_prefix}")
         # returns a list of image bytes
         image_bytes_list = []
         for f in Path(output_dir).iterdir():
+            print(f"checking file: {f.name}")
             if f.name.startswith(file_prefix):
                 image_bytes_list.append(f.read_bytes())
         return image_bytes_list
@@ -225,13 +227,13 @@ class ComfyUI:
         workflow_data["6"]["inputs"]["text"] = item["prompt"]
 
         # set the number of images to generate
-        workflow_data["149"]["inputs"]["batch_size"] = item["count"]
+        workflow_data["158"]["inputs"]["batch_size"] = item["count"]
 
         # give the output image a unique id per client request
-        workflow_data["9"]["inputs"]["filename_prefix"] = f"{gen_id}_first_gen"
+        workflow_data["174"]["inputs"]["filename_prefix"] = f"{gen_id}_first_gen"
 
         # set the seed
-        workflow_data["148"]["inputs"]["seed"] = item["seed"]
+        workflow_data["156"]["inputs"]["noise_seed"] = item["seed"]
 
         # save this updated workflow to a new file
         new_workflow_file = f"{gen_id}_first_gen.json"
@@ -264,17 +266,10 @@ class ComfyUI:
         temp_file_path = f"{input_dir}/{temp_file_name}"
         
         with open(temp_file_path, "wb") as temp_file:
-            temp_file.write(image_data)
+            temp_file.write(image_data) 
 
         # Use the temporary file as input for the workflow
         workflow_data["47"]["inputs"]["image"] = temp_file_name
-
-        # set the noise injection
-        noise_strength = item.get("noise_strength", 0)
-        workflow_data["158"]["inputs"]["noise_strength"] = noise_strength
-
-        denoise_amount = item.get("denoise_amount", 0.9)
-        workflow_data["17"]["inputs"]["denoise"] = denoise_amount
 
         # insert the prompt
         workflow_data["6"]["inputs"]["text"] = item["prompt"]
@@ -304,8 +299,10 @@ class ComfyUI:
         from fastapi.responses import JSONResponse
         import base64
 
+        print(f"received body: {item}")
+
         workflow_data = json.loads(
-            (Path(__file__).parent / "object_refining_workflow_api.json").read_text()
+            (Path(__file__).parent / "object_refine_workflow_api.json").read_text()
         )
         gen_id = item["gen_id"]
 
@@ -320,22 +317,19 @@ class ComfyUI:
         with open(temp_file_path, "wb") as temp_file:
             temp_file.write(image_data)
 
+        # workflow_data["206"]["inputs"]["seed"] = item["seed"]
+
         # Use the temporary file as input for the workflow
         workflow_data["47"]["inputs"]["image"] = temp_file_name
-
-         # set the noise injection
-        noise_strength = item.get("noise_strength", 0)
-        workflow_data["158"]["inputs"]["noise_strength"] = noise_strength
-
-        denoise_amount = item.get("denoise_amount", 0.9)
-        workflow_data["17"]["inputs"]["denoise"] = denoise_amount
 
         # Insert the prompt if it's used in this workflow
         if "6" in workflow_data and "inputs" in workflow_data["6"]:
             workflow_data["6"]["inputs"]["text"] = item.get("prompt", "")
 
         # Give the output image a unique id per client request
-        workflow_data["165"]["inputs"]["filename_prefix"] = f"{gen_id}_refine_object"
+        workflow_data["164"]["inputs"]["filename_prefix"] = f"{gen_id}_refine_object"
+
+        print(workflow_data)
 
         # Save this updated workflow to a new file
         new_workflow_file = f"{gen_id}_refine_object.json"
@@ -344,6 +338,7 @@ class ComfyUI:
         # Run inference on the currently running container
         img_bytes_list = self.infer.local(new_workflow_file)
 
+        print(f"returning {len(img_bytes_list)} images")
         # Always return images as a JSON array of base64 encoded strings
         encoded_images = [base64.b64encode(img).decode('utf-8') for img in img_bytes_list]
 

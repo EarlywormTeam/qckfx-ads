@@ -74,7 +74,8 @@ class SessionMiddleware(Middleware):
                         value=session_data,
                         httponly=True,
                         secure=True,
-                        samesite="lax"
+                        samesite="lax",
+                        max_age=172800  # 2 days
                     )
                 
                 return response

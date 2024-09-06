@@ -8,6 +8,7 @@ class ImageRegistrationNode:
         return {
             "required": {
                 "image": ("IMAGE",),
+                "image_mask": ("IMAGE",),
                 "mask": ("IMAGE",),
             },
         }
@@ -16,29 +17,59 @@ class ImageRegistrationNode:
     FUNCTION = "align_images"
     CATEGORY = "image/processing"
 
-    def align_images(self, image: torch.Tensor, mask: torch.Tensor):
+    def align_images(self, image: torch.Tensor, image_mask: torch.Tensor, mask: torch.Tensor):
         print("Starting align_images function")
-        
         # Convert tensors to numpy arrays
         image_np = self.tensor_to_numpy(image)
+        image_mask_np = self.tensor_to_numpy(image_mask)
         mask_np = self.tensor_to_numpy(mask)
-        print(f"Image shape: {image_np.shape}, Mask shape: {mask_np.shape}")
+        print(f"Image shape: {image_np.shape}, Image Mask shape: {image_mask.shape}, Mask shape: {mask_np.shape}")
         
         # Ensure mask is binary and single-channel
+        image_mask_gray = self.ensure_grayscale(image_mask_np)
+        _, image_mask_binary = cv2.threshold(image_mask_gray, 127, 255, cv2.THRESH_BINARY)
+        print(f"Binary image mask shape: {image_mask_binary.shape}")
+
         mask_gray = self.ensure_grayscale(mask_np)
         _, mask_binary = cv2.threshold(mask_gray, 127, 255, cv2.THRESH_BINARY)
         print(f"Binary mask shape: {mask_binary.shape}")
         
+        # Find contours of the image mask
+        contours, _ = cv2.findContours(image_mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        print(f"Number of contours found in image mask: {len(contours)}")
+        
+        if not contours:
+            print("No contours found in image mask. Returning original image.")
+            return (image,)
+        
+        # Find the largest contour (assuming it's the main object)
+        main_contour = max(contours, key=cv2.contourArea)
+        print(f"Area of main contour in image mask: {cv2.contourArea(main_contour)}")
+        
+        # Get the bounding rectangle of the main contour in the image mask
+        x, y, w, h = cv2.boundingRect(main_contour)
+        print(f"Bounding rectangle of object in image mask: x={x}, y={y}, w={w}, h={h}")
+        
+        # Calculate padding
+        pad_left, pad_top = x, y
+        pad_right, pad_bottom = image_mask_binary.shape[1] - (x + w), image_mask_binary.shape[0] - (y + h)
+        print(f"Padding: left={pad_left}, top={pad_top}, right={pad_right}, bottom={pad_bottom}")
+        
+        # Crop the image to remove padding
+        cropped_image = image_np[pad_top:pad_top+h, pad_left:pad_left+w]
+        print(f"Cropped image shape: {cropped_image.shape}")
+        
         # Find contours of the mask
         contours, _ = cv2.findContours(mask_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        print(f"Number of contours found: {len(contours)}")
+        print(f"Number of contours found in mask: {len(contours)}")
+        
         if not contours:
             print("No contours found in mask. Returning original image.")
             return (image,)
         
         # Find the largest contour (assuming it's the main object)
         main_contour = max(contours, key=cv2.contourArea)
-        print(f"Area of main contour: {cv2.contourArea(main_contour)}")
+        print(f"Area of main contour in mask: {cv2.contourArea(main_contour)}")
         
         # Get the rotated bounding rectangle
         rect = cv2.minAreaRect(main_contour)
@@ -48,25 +79,29 @@ class ImageRegistrationNode:
         
         # Get the angle of rotation
         angle = rect[2]
-        if angle < -45:
-            angle += 90
+        
+        # Adjust angle to minimize rotation
+        if abs(angle) > 45:
+            angle = angle - 90 if angle > 0 else angle + 90
+        
         # Reverse the angle for clockwise rotation
         angle = -angle
-        print(f"Rotation angle (clockwise): {angle}")
         
         # Get the center, width, and height of the rotated rectangle
-        center, (width, height) = rect[0], rect[1]
-        print(f"Mask white area - Center: {center}, Width: {width}, Height: {height}")
+        center, (height, width) = rect[:2]
         
-        # Step 1: Rotate the image
-        rotation_matrix = cv2.getRotationMatrix2D((image_np.shape[1] / 2, image_np.shape[0] / 2), angle, 1.0)
+        print(f"Final rotation angle: {angle}")
+        print(f"Rotated rectangle - Center: {center}, Width: {width}, Height: {height}")
+        
+        # Step 1: Rotate the cropped image
+        rotation_matrix = cv2.getRotationMatrix2D((cropped_image.shape[1] / 2, cropped_image.shape[0] / 2), angle, 1.0)
         cos = np.abs(rotation_matrix[0, 0])
         sin = np.abs(rotation_matrix[0, 1])
-        rotated_w = int((image_np.shape[1] * cos) + (image_np.shape[0] * sin))
-        rotated_h = int((image_np.shape[1] * sin) + (image_np.shape[0] * cos))
-        rotation_matrix[0, 2] += (rotated_w / 2) - image_np.shape[1] / 2
-        rotation_matrix[1, 2] += (rotated_h / 2) - image_np.shape[0] / 2
-        rotated_image = cv2.warpAffine(image_np, rotation_matrix, (rotated_w, rotated_h), flags=cv2.INTER_LINEAR)
+        rotated_w = int((cropped_image.shape[1] * cos) + (cropped_image.shape[0] * sin))
+        rotated_h = int((cropped_image.shape[1] * sin) + (cropped_image.shape[0] * cos))
+        rotation_matrix[0, 2] += (rotated_w / 2) - cropped_image.shape[1] / 2
+        rotation_matrix[1, 2] += (rotated_h / 2) - cropped_image.shape[0] / 2
+        rotated_image = cv2.warpAffine(cropped_image, rotation_matrix, (rotated_w, rotated_h), flags=cv2.INTER_LINEAR)
         print(f"Rotated image shape: {rotated_image.shape}")
         
         # Step 2: Calculate scaling factor
@@ -118,7 +153,7 @@ class ImageRegistrationNode:
         print(f"Aligned tensor shape: {aligned_tensor.shape}")
         
         return (aligned_tensor,)
-
+ 
     def tensor_to_numpy(self, tensor):
         # Convert ComfyUI IMAGE tensor to numpy array
         tensor = tensor.squeeze()
