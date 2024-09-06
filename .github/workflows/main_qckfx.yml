@@ -28,7 +28,15 @@ jobs:
           source venv/bin/activate
       
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          cd backend
+          pip install -r requirements.txt
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run build
         
       # Optional: Add step to run tests here (PyTest, Django test suites, etc.)
 
