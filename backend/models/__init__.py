@@ -4,6 +4,7 @@ from .generated_image_group import GeneratedImageGroup
 from .organization import Organization, OrganizationMembership
 from .product import Product
 from .user import User
+from .waitlist import WaitlistEntry
 
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -30,7 +31,8 @@ async def init_beanie_models():
             Organization,
             OrganizationMembership,
             Product,
-            User
+            User,
+            WaitlistEntry
         ],
         multiprocessing_mode=True
     )

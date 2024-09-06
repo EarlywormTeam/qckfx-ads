@@ -1,10 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import FeatureList from './FeatureList';
 import VideoPlaceholder from './VideoPlaceholder';
+import { useAPI } from '@/api';
 
 const LandingPage: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const api = useAPI();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const waitlistAPI = api.createWaitlistAPI();
+      const response = await waitlistAPI.joinWaitlist(email);
+      setMessage(response);
+      setEmail('');
+    } catch {
+      setMessage('An error occurred. Please try again.');
+    }
+  };
 
   return (
     <div className="h-full w-full bg-background-accent">
@@ -28,11 +44,20 @@ const LandingPage: React.FC = () => {
         </div>
         
         <div className="mt-12">
-          <h2 className="text-xl font-semibold text-center mb-4">Join the Waitlist:</h2>
-          <div className="flex gap-4">
-            <Input placeholder="Enter your email address" className="flex-grow bg-background-white text-text-black" />
-            <Button className="bg-background-action text-text-white">Join Waitlist</Button>
-          </div>
+          <h2 className="text-xl font-semibold text-center mb-2">Exclusive Invite-Only Access</h2>
+          <p className="text-center mb-4">Our service is currently available by invitation only. Join the waitlist to receive an invite as soon as possible!</p>
+          <form onSubmit={handleSubmit} className="flex gap-4">
+            <Input
+              placeholder="Enter your email address"
+              className="flex-grow bg-background-white text-text-black"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              required
+            />
+            <Button type="submit" className="bg-background-action text-text-white">Join Waitlist</Button>
+          </form>
+          {message && <p className="text-center mt-2">{message}</p>}
         </div>
       </main>
     </div>

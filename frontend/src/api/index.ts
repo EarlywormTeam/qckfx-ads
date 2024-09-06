@@ -1,15 +1,19 @@
 import React from 'react';
 import { ProductAPI } from './product';
 import { GenerateAPI } from './generate';
+import WaitlistAPI from './waitlistAPI';
 
 export class API {
-
   createProductAPI(): ProductAPI {
     return new ProductAPI();
   }
 
   createGenerateAPI(): GenerateAPI {
     return new GenerateAPI();
+  }
+
+  createWaitlistAPI(): WaitlistAPI {
+    return new WaitlistAPI();
   }
 }
 

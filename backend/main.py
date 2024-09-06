@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from workos import AsyncWorkOSClient
 
 from api.response_types.product import ProductResponse, ProductsListResponse
-from models import GenerationJob, GeneratedImage, GeneratedImageGroup, Organization, OrganizationMembership, Product, User, init_beanie_models
+from models import GenerationJob, GeneratedImage, GeneratedImageGroup, Organization, OrganizationMembership, Product, User, init_beanie_models, WaitlistEntry
 from middleware.session import SessionMiddleware
 from background_jobs.generate_product_image.background_generate_product_image import background_generate_product_image
 from background_jobs.refine_product_image.background_refine_product_image import background_refine_product_image
@@ -446,7 +446,17 @@ async def callback(request: Request):
         # Handle any errors that might occur during authentication
         raise HTTPException(status_code=500, detail=str(e))
 
+class WaitlistRequest(BaseModel):
+    email: str
 
+@app.post("/api/waitlist")
+async def join_waitlist(request: WaitlistRequest):
+    try:
+        entry = WaitlistEntry(email=request.email)
+        await entry.insert()
+        return {"message": "Successfully joined the waitlist"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 #############################################################################
 ## KEEP THESE AT THE BOTTOM OF THE FILE. PUT EVERYTHING ELSE ABOVE HERE!!! ##
