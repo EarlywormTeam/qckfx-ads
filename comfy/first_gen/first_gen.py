@@ -140,8 +140,8 @@ def ui():
 #
 # For more on how to run web services on Modal, check out [this guide](https://modal.com/docs/guide/webhooks).
 @app.cls(
-    allow_concurrent_inputs=10,
-    concurrency_limit=1,
+    allow_concurrent_inputs=4,
+    concurrency_limit=10,
     container_idle_timeout=300,
     gpu="h100",
     mounts=[
@@ -316,6 +316,8 @@ class ComfyUI:
         
         with open(temp_file_path, "wb") as temp_file:
             temp_file.write(image_data)
+
+        workflow_data["214"]["inputs"]["text"] = item["original_prompt"]
 
         # workflow_data["206"]["inputs"]["seed"] = item["seed"]
 

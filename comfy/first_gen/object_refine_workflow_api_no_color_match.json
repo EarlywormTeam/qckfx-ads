@@ -128,7 +128,7 @@
   },
   "25": {
     "inputs": {
-      "noise_seed": 1063204707502092
+      "noise_seed": 621074974164286
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -850,7 +850,7 @@
   },
   "158": {
     "inputs": {
-      "noise_seed": 191063169071291,
+      "noise_seed": 799040701571902,
       "noise_strength": 1,
       "normalize": "false",
       "latent": [
@@ -1006,7 +1006,7 @@
   },
   "192": {
     "inputs": {
-      "noise_seed": 722586299989502
+      "noise_seed": 610535803411235
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1072,7 +1072,7 @@
   "204": {
     "inputs": {
       "noise": [
-        "25",
+        "211",
         0
       ],
       "guider": [
@@ -1099,7 +1099,7 @@
   },
   "208": {
     "inputs": {
-      "noise_seed": 520685298426175
+      "noise_seed": 285146999640914
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1109,7 +1109,7 @@
   "209": {
     "inputs": {
       "noise": [
-        "25",
+        "208",
         0
       ],
       "guider": [
@@ -1137,7 +1137,7 @@
   "210": {
     "inputs": {
       "noise": [
-        "25",
+        "212",
         0
       ],
       "guider": [
@@ -1164,7 +1164,7 @@
   },
   "211": {
     "inputs": {
-      "noise_seed": 118878275089062
+      "noise_seed": 56366372900736
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1173,7 +1173,7 @@
   },
   "212": {
     "inputs": {
-      "noise_seed": 727602300467010
+      "noise_seed": 1125613954942433
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1210,7 +1210,7 @@
   },
   "214": {
     "inputs": {
-      "text": "A photo of vibrant woman in her 20s in a kayak on the Potomac in Washington DC during the cherry blossom festival. The photo is taken by someone else in a different kayak. The subject is smiling and holding up a 6.5 inch tall, 3 inch diameter, 12 oz light blue can of Calm Crunchy sparkling water. ",
+      "text": "A photo of vibrant woman in her 20s in a kayak on the Potomac in Washington DC during the cherry blossom festival. The photo is taken by someone else in a different kayak. The subject is smiling and holding up a light blue can of Calm Crunchy sparkling water.",
       "clip": [
         "222",
         1
@@ -1239,7 +1239,7 @@
   },
   "216": {
     "inputs": {
-      "noise_seed": 38275789414991
+      "noise_seed": 683672534235124
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1331,48 +1331,6 @@
     "class_type": "LoraLoader",
     "_meta": {
       "title": "Load LoRA"
-    }
-  },
-  "223": {
-    "inputs": {
-      "method": "hm-mvgd-hm",
-      "strength": 0.5,
-      "image_ref": [
-        "47",
-        0
-      ],
-      "image_target": [
-        "195",
-        0
-      ]
-    },
-    "class_type": "ColorMatch",
-    "_meta": {
-      "title": "Color Match"
-    }
-  },
-  "224": {
-    "inputs": {
-      "images": [
-        "223",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "226": {
-    "inputs": {
-      "images": [
-        "223",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
     }
   }
 }

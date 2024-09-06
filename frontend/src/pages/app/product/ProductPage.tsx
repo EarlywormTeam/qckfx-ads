@@ -6,7 +6,7 @@ import { Slider } from "@/components/ui/slider";
 import { useLocation } from 'react-router-dom';
 import { Product } from '@/types/product';
 import { useGenerateAPI } from '@/api/generate';
-import { Trash2, RefreshCw, Maximize2, ChevronLeft, ChevronRight, Lightbulb, Infinity, Target, X, Loader2, ZoomIn, ZoomOut, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { Trash2, RefreshCw, Maximize2, ChevronLeft, ChevronRight, Lightbulb, Infinity, Target, X, Loader2, ZoomIn, ZoomOut, Download } from 'lucide-react';
 import { ImageGroup } from '@/types/generatedImage';
 import { useProductAPI } from '@/api/product';
 
