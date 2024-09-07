@@ -24,7 +24,7 @@ import background_jobs.background_io_thread as background_io_thread
 
 load_dotenv()
 
-REDIRECT_URI = os.getenv("WORKOS_REDIRECT_URI", "http://localhost:8000/api/hooks/workos")
+REDIRECT_URI = os.getenv("WORKOS_REDIRECT_URI", "http://qckfx.com/api/hooks/workos")
 workos_client = AsyncWorkOSClient(api_key=os.getenv("WORKOS_API_KEY"), client_id=os.getenv("WORKOS_CLIENT_ID"))
 
 cookie_password = os.getenv("COOKIE_PASSWORD")
