@@ -22,8 +22,6 @@ const Header: React.FC<HeaderProps> = ({ bypassAuth }) => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
 
-  const isDev = process.env.ENV === 'development';
-
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -96,17 +94,6 @@ const Header: React.FC<HeaderProps> = ({ bypassAuth }) => {
             className="text-text-darkPrimary font-bold text-md"
           >
             Account
-          </Button>
-        )}
-        {!isDev && bypassAuth && (
-          <Button
-            variant="ghost"
-            className="text-text-darkPrimary font-bold text-md"
-            onClick={() => {
-              // Add logic to disable auth bypass
-            }}
-          >
-            Disable auth bypass
           </Button>
         )}
       </div>

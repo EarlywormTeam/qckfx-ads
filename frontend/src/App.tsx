@@ -15,7 +15,8 @@ import { API } from './api';
 function App() {
   const [cookies] = useCookies(['session']);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [bypassAuth, setBypassAuth] = useState(true);
+  const [bypassAuth, setBypassAuth] = useState(false);
+  const isDev = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
     const checkLoginStatus = () => {
@@ -46,9 +47,11 @@ function App() {
     <ErrorBoundary>
       <APIProvider api={new API()}>
         <BrowserRouter>
-          <button onClick={() => setBypassAuth(!bypassAuth)}>
-            {bypassAuth ? 'Disable' : 'Enable'} Auth Bypass
-          </button>
+          {isDev && (
+            <button onClick={() => setBypassAuth(!bypassAuth)}>
+              {bypassAuth ? 'Disable' : 'Enable'} Auth Bypass
+            </button>
+          )}
           <Routes>
             <Route element={<RootLayout isLoggedIn={isLoggedIn} bypassAuth={bypassAuth} />}>
               <Route path="/" element={<LandingPage />} />
