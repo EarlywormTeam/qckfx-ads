@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import { Button } from "@/components/ui/button";
@@ -12,45 +12,22 @@ type Organization = {
 
 interface HeaderProps {
   bypassAuth: boolean;
+  isLoggedIn: boolean;
+  organizations: Organization[];
+  selectedOrg: Organization | null;
+  setSelectedOrg: (org: Organization | null) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ bypassAuth }) => {
+const Header: React.FC<HeaderProps> = ({ bypassAuth, isLoggedIn, organizations, selectedOrg, setSelectedOrg }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const isLandingPage = location.pathname === '/';
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
-
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const response = await fetch('/api/auth/status', {
-          credentials: 'include' // This is important to include cookies in the request
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setOrganizations(data.organizations);
-          setSelectedOrg(data.organizations[0]);
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-        }
-      } catch {
-        setIsLoggedIn(false);
-      }
-    };
-
-    checkLoginStatus();
-  }, []); // Remove cookies.session from the dependency array
 
   const handleSignIn = (event: React.MouseEvent) => {
     event.preventDefault();
     if (bypassAuth) {
-      // If bypass auth is enabled, redirect to the app page
       window.location.href = '/app';
     } else {
-      // If bypass auth is not enabled, proceed with normal authentication
       window.location.href = '/auth';
     }
   };

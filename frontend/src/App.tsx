@@ -8,33 +8,43 @@ import CreateProductPage from './pages/app/createProduct/CreateProductPage';
 import { Toaster } from "@/components/ui/toaster";
 import RootLayout from './layouts/RootLayout';
 import { useState, useEffect } from 'react';
-import { useCookies } from 'react-cookie';
 import { APIProvider } from './api/APIProvider';
 import { API } from './api';
 
+// Add Organization type
+type Organization = {
+  id: string;
+  name: string;
+};
+
 function App() {
-  const [cookies] = useCookies(['session']);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [bypassAuth, setBypassAuth] = useState(false);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
   const isDev = process.env.NODE_ENV === 'development';
 
   useEffect(() => {
-    const checkLoginStatus = () => {
-      if (cookies.session) {
-        try {
-          const sessionData = JSON.parse(cookies.session);
-          setIsLoggedIn(!!sessionData.user_id);
-        } catch (error) {
-          console.error('Error parsing session cookie:', error);
+    const checkLoginStatus = async () => {
+      try {
+        const response = await fetch('/api/auth/status', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setOrganizations(data.organizations);
+          setSelectedOrg(data.organizations[0]);
+          setIsLoggedIn(true);
+        } else {
           setIsLoggedIn(false);
         }
-      } else {
+      } catch {
         setIsLoggedIn(false);
       }
     };
 
     checkLoginStatus();
-  }, [cookies.session]);
+  }, []);
 
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     if (isLoggedIn || bypassAuth) {
@@ -53,7 +63,15 @@ function App() {
             </button>
           )}
           <Routes>
-            <Route element={<RootLayout isLoggedIn={isLoggedIn} bypassAuth={bypassAuth} />}>
+            <Route element={
+              <RootLayout
+                isLoggedIn={isLoggedIn}
+                bypassAuth={bypassAuth}
+                organizations={organizations}
+                selectedOrg={selectedOrg}
+                setSelectedOrg={setSelectedOrg}
+              />
+            }>
               <Route path="/" element={<LandingPage />} />
               <Route path="/app" element={
                 <ProtectedRoute>
