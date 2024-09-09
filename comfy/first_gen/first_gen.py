@@ -102,6 +102,14 @@ image = (  # build up a Modal Image to run ComfyUI, step by step
         "comfy --skip-prompt model download --url https://huggingface.co/XLabs-AI/flux-controlnet-collections/resolve/main/flux-canny-controlnet_v2.safetensors --relative-path models/xlabs/controlnets",
         "cp root/comfy/ComfyUI/models/xlabs/controlnets/flux-canny-controlnet_v2.safetensors root/comfy/ComfyUI/models/controlnet/controlnet.safetensors"
     )
+    .run_commands(
+        f"wget --header=\"Authorization: Bearer {os.getenv('HF_TOKEN')}\" -P /root/comfy/ComfyUI/models/loras/flux_realism https://huggingface.co/XLabs-AI/flux-RealismLora/resolve/main/lora.safetensors"
+     )
+     .run_commands(
+       "comfy node install ComfyUI_Noise",
+       "comfy node install comfyui-tensorops",
+       "comfy node install masquerade-nodes-comfyui"
+     )
     # can layer additional models and custom node downloads as needed
 )
 
@@ -116,7 +124,7 @@ app = modal.App(name="product-shoot", image=image)
     concurrency_limit=1,
     container_idle_timeout=30,
     timeout=1800,
-    gpu="a100",
+    gpu=modal.gpu.A100(size="80GB"),
     mounts=[
         modal.Mount.from_local_file(
             Path(__file__).parent / "image-registration-node.py",
@@ -140,7 +148,7 @@ def ui():
 #
 # For more on how to run web services on Modal, check out [this guide](https://modal.com/docs/guide/webhooks).
 @app.cls(
-    allow_concurrent_inputs=4,
+    allow_concurrent_inputs=1,
     concurrency_limit=10,
     container_idle_timeout=300,
     gpu="h100",
@@ -224,16 +232,22 @@ class ComfyUI:
         gen_id = item["gen_id"]
 
         # insert the prompt
-        workflow_data["6"]["inputs"]["text"] = item["prompt"]
+        workflow_data["295"]["inputs"]["text"] = item["prompt"]
 
         # set the number of images to generate
-        workflow_data["158"]["inputs"]["batch_size"] = item["count"]
+        workflow_data["304"]["inputs"]["batch_size"] = item["count"]
 
         # give the output image a unique id per client request
-        workflow_data["174"]["inputs"]["filename_prefix"] = f"{gen_id}_first_gen"
+        workflow_data["164"]["inputs"]["filename_prefix"] = f"{gen_id}_first_gen"
 
         # set the seed
-        workflow_data["156"]["inputs"]["noise_seed"] = item["seed"]
+        workflow_data["25"]["inputs"]["noise_seed"] = item["seed"]
+        workflow_data["192"]["inputs"]["noise_seed"] = item["seed"]
+        workflow_data["208"]["inputs"]["noise_seed"] = item["seed"]
+        workflow_data["211"]["inputs"]["noise_seed"] = item["seed"]
+        workflow_data["212"]["inputs"]["noise_seed"] = item["seed"]
+        workflow_data["236"]["inputs"]["noise_seed"] = item["seed"]
+        workflow_data["303"]["inputs"]["noise_seed"] = item["seed"]
 
         # save this updated workflow to a new file
         new_workflow_file = f"{gen_id}_first_gen.json"

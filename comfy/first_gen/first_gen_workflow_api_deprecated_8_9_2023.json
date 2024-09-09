@@ -1,0 +1,194 @@
+{
+  "6": {
+    "inputs": {
+      "text": "Create a portrait-oriented image of a woman on a beach at sunset, ideal for an Instagram Reels cover. Focus on the subject with a clear view of the sunset sky.\nSubject: Early 30s, Caucasian with freckles, average build.\nFace: Heart-shaped with high cheekbones, hazel eyes, straight nose, full lips with a relaxed smile. Fair skin with a sun-kissed glow (Fitzpatrick II-III). Subtle smoky eye makeup and natural lip tint.\nHair: Long, wavy chestnut brown hair with caramel highlights, tousled and windswept. A thin braided crown adorned with small white wildflowers.\nOutfit: Flowy, off-shoulder maxi dress in soft ivory. No buttons. No straps.\n\nNeckline: Wide, elasticized off-shoulder style sitting 2 inches below the collarbone.\nSleeves: Elbow-length (falling 2 inches below the elbow), billowy with gathered cuffs.\nBodice: Fitted to the natural waistline with delicate ruching.\nSkirt: Ankle-length (1 inch above the ground when standing), flowing A-line silhouette.\nFabric: Light, airy cotton blend.\nNo trim\nBelt: 1/2-inch wide braided leather belt in warm cognac brown, sitting at the natural waist. Tied in a knot.\nAccessories:\nLarge round sunglasses with gradient lenses, gold frames, boho style.\n\nCamera angle is straight-on, at eye level.\nHer body is angled slightly to the left, with her face turned towards the camera.\nThe other is holding the can of Calm Crunchy sparkling water.\nExpression is serene and slightly mysterious, with a hint of a smile.\nOverall posture is relaxed and confident.\nShe is holding a can of Calm Crunchy sparkling water. The can is a light shade of blue and the can's logo is a striking white illustration of a stylized human head. The words \"Crunchy\" and \"Hydration\" are visible above and below the logo, and after a small gap, below them the flavor \"Calm\" and below that in small lowercase letters \"watermelon\".\n\nLighting and Background:\n\nWarm, golden hour lighting casting a soft, ethereal glow on the scene.\nSky dominated by vibrant sunset colors - rich oranges, pinks, and hints of purple.\nSun low on the horizon, partially visible and creating a streak of light across the water.\nOcean visible in the background, reflecting the sunset colors.\nA few seagulls silhouetted against the sky for added beach atmosphere.",
+      "clip": [
+        "180",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "10": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "11": {
+    "inputs": {
+      "clip_name1": "t5xxl_fp16.safetensors",
+      "clip_name2": "clip_l.safetensors",
+      "type": "flux"
+    },
+    "class_type": "DualCLIPLoader",
+    "_meta": {
+      "title": "DualCLIPLoader"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux1-dev.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "153": {
+    "inputs": {
+      "guidance": 4.5,
+      "conditioning": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "FluxGuidance"
+    }
+  },
+  "156": {
+    "inputs": {
+      "noise_seed": 192231504365931
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "158": {
+    "inputs": {
+      "width": 768,
+      "height": 768,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "164": {
+    "inputs": {
+      "noise": [
+        "156",
+        0
+      ],
+      "guider": [
+        "193",
+        0
+      ],
+      "sampler": [
+        "165",
+        0
+      ],
+      "sigmas": [
+        "166",
+        0
+      ],
+      "latent_image": [
+        "158",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "165": {
+    "inputs": {
+      "sampler_name": "ipndm"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "166": {
+    "inputs": {
+      "scheduler": "normal",
+      "steps": 60,
+      "denoise": 1,
+      "model": [
+        "180",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "174": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "177",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "177": {
+    "inputs": {
+      "samples": [
+        "164",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "180": {
+    "inputs": {
+      "lora_name": "med_intense_can.safetensors",
+      "strength_model": 0.8,
+      "strength_clip": 1,
+      "model": [
+        "12",
+        0
+      ],
+      "clip": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "193": {
+    "inputs": {
+      "model": [
+        "180",
+        0
+      ],
+      "conditioning": [
+        "153",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "BasicGuider"
+    }
+  }
+}
