@@ -72,7 +72,7 @@ function App() {
                 setSelectedOrg={setSelectedOrg}
               />
             }>
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={isLoggedIn ? <Navigate to="/app" replace /> : <LandingPage />} />
               <Route path="/app" element={
                 <ProtectedRoute>
                   <HomePage />
