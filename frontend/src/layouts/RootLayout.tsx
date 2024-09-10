@@ -16,7 +16,7 @@ interface RootLayoutProps {
 
 const RootLayout: React.FC<RootLayoutProps> = ({ isLoggedIn, bypassAuth, organizations, selectedOrg, setSelectedOrg }) => {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-full w-full">
       <Header
         bypassAuth={bypassAuth}
         isLoggedIn={isLoggedIn}
