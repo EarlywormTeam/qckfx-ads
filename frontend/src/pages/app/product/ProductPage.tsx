@@ -9,6 +9,7 @@ import { useGenerateAPI } from '@/api/generate';
 import { Trash2, RefreshCw, Maximize2, ChevronLeft, ChevronRight, Lightbulb, Infinity, Target, X, Loader2, ZoomIn, ZoomOut, Download } from 'lucide-react';
 import { ImageGroup } from '@/types/generatedImage';
 import { useProductAPI } from '@/api/product';
+import { saveAs } from 'file-saver';
 
 const ProductPage: React.FC = () => {
   const location = useLocation();
@@ -207,25 +208,19 @@ const ProductPage: React.FC = () => {
     setCurrentVersion(generatedImageGroups[newIndex].images.length - 1);
   };
 
-  const handleDownload = useCallback((imageUrl: string, filename: string) => {
-    fetch(imageUrl)
-      .then(response => response.blob())
-      .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(() => toast({
+  const handleDownload = useCallback(async (imageId: string, filename: string) => {
+    try {
+      const blob = await productAPI.downloadImage(imageId);
+      saveAs(blob, filename);
+    } catch (error) {
+      console.error('Error downloading image:', error);
+      toast({
         title: "Error",
         description: "Failed to download image. Please try again.",
         variant: "destructive",
-      }));
-  }, [toast]);
+      });
+    }
+  }, [productAPI, toast]);
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
@@ -351,7 +346,7 @@ const ProductPage: React.FC = () => {
                             <Button variant="ghost" size="sm" onClick={() => handleFullScreenVersions(group, index)} className="mr-2">
                               <Maximize2 size={20} className="text-white" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDownload(getMostRecentImage(group).url, `image_${group.id}.png`)}>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownload(getMostRecentImage(group).id, `image_${group.id}.jpg`)}>
                               <Download size={20} className="text-white" />
                             </Button>
                           </div>
@@ -526,7 +521,7 @@ const ProductPage: React.FC = () => {
               <div className="flex justify-between">
                 <Button 
                   variant="outline" 
-                  onClick={() => handleDownload(fullscreenGroup.images[currentVersion].url, `image_${fullscreenGroup.id}_v${currentVersion + 1}.png`)}
+                  onClick={() => handleDownload(fullscreenGroup.images[currentVersion].id, `image_${fullscreenGroup.id}_v${currentVersion + 1}.jpg`)}
                   className="text-text-white border-text-white bg-background-dark/50 hover:bg-background-dark/70"
                 >
                   <Download size={20} className="mr-2" /> Download This Version

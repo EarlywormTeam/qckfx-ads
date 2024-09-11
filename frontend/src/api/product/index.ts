@@ -47,6 +47,10 @@ export class ProductAPI {
   async deleteImageGroup(productId: string, groupId: string): Promise<void> {
     return this.imageGroupAPI.deleteImageGroup(productId, groupId);
   }
+
+  async downloadImage(imageId: string): Promise<Blob> {
+    return this.imageGroupAPI.downloadImage(imageId);
+  }
 }
 
 export function useProductAPI() {

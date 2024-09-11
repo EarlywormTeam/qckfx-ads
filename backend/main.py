@@ -9,10 +9,13 @@ from beanie import PydanticObjectId
 from beanie.operators import In
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Request, HTTPException
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from workos import AsyncWorkOSClient
+import io
+from starlette.middleware.base import BaseHTTPMiddleware
+from urllib.parse import urlparse
 
 from api.response_types.product import ProductResponse, ProductsListResponse
 from models import GenerationJob, GeneratedImage, GeneratedImageGroup, Organization, OrganizationMembership, Product, User, init_beanie_models, WaitlistEntry
@@ -21,6 +24,7 @@ from background_jobs.generate_product_image.background_generate_product_image im
 from background_jobs.refine_product_image.background_refine_product_image import background_refine_product_image
 from background_jobs.train_product_lora import train_product_lora
 import background_jobs.background_io_thread as background_io_thread
+from toolbox import Toolbox
 
 load_dotenv()
 
@@ -38,7 +42,14 @@ async def verify_session(request: Request):
         raise HTTPException(status_code=401, detail="Unauthorized")
     return request.state.session
 
+class ToolboxMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        request.state.toolbox = Toolbox()
+        response = await call_next(request)
+        return response
+
 app = FastAPI()
+app.add_middleware(ToolboxMiddleware)
 
 # Modify the startup event to initialize the database
 @app.on_event("startup")
@@ -457,6 +468,30 @@ async def join_waitlist(request: WaitlistRequest):
         return {"message": "Successfully joined the waitlist"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/image/{image_id}/download")
+async def download_image(request: Request, image_id: str, session: dict = Depends(verify_session)):
+    image = await GeneratedImage.get(image_id)
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+    
+    # Extract blob name from the URL
+    parsed_url = urlparse(image.url)
+    blob_name = os.path.basename(parsed_url.path)
+
+    print(blob_name) 
+    # Fetch the image data from the blob storage
+    blob_storage = request.state.toolbox.services.blob_storage
+    blob_data = await blob_storage.download_blob(blob_name)
+    
+    # Create a streaming response
+    return StreamingResponse(
+        io.BytesIO(blob_data),
+        media_type="image/jpeg",
+        headers={
+            "Content-Disposition": f"attachment; filename=generated_image_{image_id}.jpg"
+        }
+    )
 
 #############################################################################
 ## KEEP THESE AT THE BOTTOM OF THE FILE. PUT EVERYTHING ELSE ABOVE HERE!!! ##

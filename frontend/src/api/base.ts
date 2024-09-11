@@ -10,7 +10,12 @@ export default class BaseAPI {
     this.baseURL = import.meta.env.VITE_API_URL || '/api';
   }
 
-  protected async request(method: string, endpoint: string, data?: Record<string, unknown>): Promise<unknown> {
+  protected async request(
+    method: string, 
+    endpoint: string, 
+    data?: Record<string, unknown>, 
+    responseType: 'json' | 'blob' = 'json'
+  ): Promise<unknown> {
     try {
       const response = await axios({
         method,
@@ -19,8 +24,14 @@ export default class BaseAPI {
         headers: {
           'Content-Type': 'application/json',
         },
+        responseType,
         validateStatus: (status) => status >= 200 && status < 300,
       });
+      
+      if (responseType === 'blob') {
+        return response.data;
+      }
+      
       return camelizeKeys(response.data);
     } catch (error) {
       console.log(error)
