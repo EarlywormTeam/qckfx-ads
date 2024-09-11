@@ -1,9 +1,10 @@
 import { z } from 'zod';
 
 export const GeneratedImageSchema = z.object({
-  url: z.string(),
-  createdAt: z.string(),
   id: z.string(),
+  url: z.string().nullable(),
+  createdAt: z.string(),
+  status: z.enum(['pending', 'generated', 'failed']),
 });
 
 export const ImageGroupSchema = z.object({

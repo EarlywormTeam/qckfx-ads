@@ -248,7 +248,7 @@ async def get_generation_job(generation_job_id: str):
     
     response = {"generation_job": generation_job}
     
-    if generation_job.status == "completed":
+    if generation_job.status == "in_progress" or generation_job.status == "completed":
         # Fetch all image groups associated with this generation job
         image_groups = await GeneratedImageGroup.find(
             In(GeneratedImageGroup.id, generation_job.image_group_ids)
@@ -266,7 +266,7 @@ async def get_generation_job(generation_job_id: str):
                 "id": str(group.id),
                 "created_at": group.created_at.isoformat(),
                 "updated_at": group.updated_at.isoformat(),
-                "images": [{"url": image.url, "created_at": image.created_at.isoformat(), "id": str(image.id)} for image in generated_images]
+                "images": [{"url": image.url, "status": image.status, "created_at": image.created_at.isoformat(), "id": str(image.id)} for image in generated_images]
             }
             response["image_groups"].append(group_data)
     

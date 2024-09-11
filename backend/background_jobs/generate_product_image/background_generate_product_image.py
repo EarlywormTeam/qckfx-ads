@@ -1,5 +1,5 @@
 from beanie import PydanticObjectId
-from models import GenerationJob, GeneratedImage, Product
+from models import GenerationJob, GeneratedImage, Product, ImageStatus
 from toolbox import Toolbox
 
 async def background_generate_product_image(toolbox: Toolbox, prompt: str, count: int, product_id: PydanticObjectId, generation_job_id: PydanticObjectId, image_group_ids: [PydanticObjectId]):
@@ -17,12 +17,27 @@ async def background_generate_product_image(toolbox: Toolbox, prompt: str, count
 
         # Generate the image using the image service
         image_service = toolbox.services.image_service
-        image_data = await image_service.generate_images(prompt, count, str(product_id), str(generation_job_id), product.lora_name, product.description, product.trigger_word, product.detection_prompt)
+        image_generator = image_service.generate_images_stream(prompt, count, str(product_id), str(generation_job_id), product.lora_name, product.description, product.trigger_word, product.detection_prompt)
 
         # Upload the generated image to blob storage
         blob_storage = toolbox.services.blob_storage
-        # Process each image datum in the list
-        for index, image_datum in enumerate(image_data):
+        # Process each image as it's generated
+        async for index, image_datum in image_generator:
+            # Create a new GeneratedImage document for each expected image
+            generated_image = await GeneratedImage.create(
+                generation_job_id=generation_job.id,
+                group_id=image_group_ids[index],
+                status=ImageStatus.PENDING
+            )
+            await generated_image.save()
+
+            if image_datum is None:
+                # Image generation failed
+                await generation_job.add_log_entry(f"Image {index + 1}/{count} generation failed")
+                generated_image.status = ImageStatus.FAILED
+                await generated_image.save()
+                continue
+
             # Generate a unique blob name for each image
             blob_name = f"generated_image_{generation_job_id}_{index}.jpg"
             
@@ -32,17 +47,17 @@ async def background_generate_product_image(toolbox: Toolbox, prompt: str, count
             # Get the URL of the uploaded image
             image_url = await blob_storage.get_blob_url(blob_id)
 
-            # Create a new GeneratedImage document and store the URL for each image
-            generated_image = await GeneratedImage.create(
-                generation_job_id=generation_job.id,
-                group_id=image_group_ids[index],
-                url=image_url
-            )
+            # Update the generated image with the URL and status
+            generated_image.url = image_url
+            generated_image.status = ImageStatus.GENERATED
             await generated_image.save()
+
+            # Update the generation job with progress
+            await generation_job.add_log_entry(f"Image {index + 1}/{count} generated")
 
         # Update the generation job with completed status
         await generation_job.update_status('completed')
-        await generation_job.add_log_entry("Image generation completed successfully")
+        await generation_job.add_log_entry("Image generation completed")
 
     except Exception as e:
         # Update the generation job with error status and log the error

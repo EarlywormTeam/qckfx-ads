@@ -1,11 +1,18 @@
 from beanie import Document, Indexed, PydanticObjectId
-from pydantic import Field
+from pydantic import Field, BaseModel
 from datetime import datetime
+from enum import Enum
+
+class ImageStatus(str, Enum):
+    PENDING = "pending"
+    GENERATED = "generated"
+    FAILED = "failed"
 
 class GeneratedImage(Document):
     generation_job_id: Indexed(PydanticObjectId)
     group_id: Indexed(PydanticObjectId)
-    url: str
+    url: str | None = None
+    status: ImageStatus = ImageStatus.PENDING
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -21,11 +28,11 @@ class GeneratedImage(Document):
         }
 
     @classmethod
-    async def create(cls, generation_job_id: PydanticObjectId, group_id: PydanticObjectId, url: str):
+    async def create(cls, generation_job_id: PydanticObjectId, group_id: PydanticObjectId, status: ImageStatus):
         return cls(
             generation_job_id=generation_job_id,
             group_id=group_id,
-            url=url
+            status=status
         )
 
     @classmethod

@@ -3,7 +3,7 @@ from fastapi import HTTPException
 import base64
 import random
 import asyncio
-from typing import Callable, Any
+from typing import Callable, Any, AsyncGenerator
 
 class ModalService:
     async def _make_dual_requests(self, url: str, payload: dict, process_response: Callable[[dict], Any]) -> Any:
@@ -112,3 +112,57 @@ class ModalService:
             return None
 
         return await self._make_request(url, payload, process_response)
+
+    async def generate_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str) -> AsyncGenerator[tuple[int, bytes | None], None]:
+        """
+        Send multiple requests to generate images using the Modal service and yield them as they are created.
+
+        Args:
+            prompt (str): The prompt for image generation.
+            count (int): The number of images to generate (one per request).
+            product_id (str): The ID of the product.
+            gen_id (str): The generation ID.
+            lora_name (str): The name of the lora weights to use.
+            product_description (str): The description of the product.
+            trigger_word (str): The trigger word to use for the prompt.
+            detection_prompt (str): The detection prompt for the image.
+
+        Yields:
+            tuple[int, bytes | None]: A tuple containing the index of the generated image and the image data.
+
+        Raises:
+            HTTPException: If all requests fail or return unexpected status codes.
+        """
+        url = "https://christopherhwood--product-shoot-comfyui-first-gen.modal.run"
+        
+        async def single_image_request(index: int):
+            seed = random.randint(0, 2**32 - 1)
+            payload = {
+                "prompt": "flux_realism " + prompt,
+                "count": 1,  # Always set to 1 for individual image generation
+                "product_id": product_id,
+                "gen_id": gen_id,
+                "seed": seed,
+                "lora_name": lora_name,
+                "product_description": product_description,
+                "trigger_word": trigger_word,
+                "detection_prompt": detection_prompt
+            }
+
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                try:
+                    response = await client.post(url, json=payload, timeout=400.0)
+                    if response.status_code == 200:
+                        json_response = response.json()
+                        if 'images' in json_response and json_response['images']:
+                            return index, base64.b64decode(json_response['images'][0])
+                        else:
+                            return index, None  # Image generation failed
+                except httpx.RequestError:
+                    return index, None  # Request failed
+            return index, None  # Default case: failed
+
+        tasks = [single_image_request(i) for i in range(count)]
+        for task in asyncio.as_completed(tasks):
+            result = await task
+            yield result

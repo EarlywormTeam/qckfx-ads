@@ -6,8 +6,8 @@ import { Slider } from "@/components/ui/slider";
 import { useLocation } from 'react-router-dom';
 import { Product } from '@/types/product';
 import { useGenerateAPI } from '@/api/generate';
-import { Trash2, RefreshCw, Maximize2, ChevronLeft, ChevronRight, Lightbulb, Infinity, Target, X, Loader2, ZoomIn, ZoomOut, Download } from 'lucide-react';
-import { ImageGroup } from '@/types/generatedImage';
+import { Trash2, RefreshCw, Maximize2, ChevronLeft, ChevronRight, Lightbulb, Infinity, Target, X, Loader2, ZoomIn, ZoomOut, Download, XCircle } from 'lucide-react';
+import { ImageGroup, GeneratedImage } from '@/types/generatedImage';
 import { useProductAPI } from '@/api/product';
 import { saveAs } from 'file-saver';
 
@@ -49,24 +49,36 @@ const ProductPage: React.FC = () => {
     setGeneratedImageGroups(prevGroups => [
       ...Array(4).fill({
         id: 'placeholder',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        images: [{ url: '', created_at: new Date().toISOString() }]
-      }),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        images: [{ id: 'placeholder', url: null, createdAt: new Date().toISOString(), status: 'pending' }]
+      } as ImageGroup),
       ...prevGroups
     ]);
 
     try {
       const generationJobId = await generateImageAPI.generateProductImage(product!.id, prompt, 4);
-      const result = await generateImageAPI.pollGenerationJob(generationJobId);
+      const generator = generateImageAPI.pollGenerationJob(generationJobId);
 
-      if (result.generationJob.status === 'completed' && result.imageGroups) {
-        setGeneratedImageGroups(prevGroups => [
-          ...result.imageGroups!,
-          ...prevGroups.filter(group => group.id !== 'placeholder')
-        ]);
-      } else {
-        throw new Error('Image generation failed');
+      for await (const result of generator) {
+        if (result.imageGroups) {
+          setGeneratedImageGroups(prevGroups => {
+            const newGroups = [...prevGroups];
+            result.imageGroups!.forEach(group => {
+              const existingIndex = newGroups.findIndex(g => g.id === group.id);
+              if (existingIndex !== -1) {
+                newGroups[existingIndex] = group as ImageGroup;
+              } else {
+                newGroups.push(group as ImageGroup);
+              }
+            });
+            return newGroups.filter(group => group.id !== 'placeholder');
+          });
+        }
+
+        if (result.generationJob.status === 'completed') {
+          break;
+        }
       }
     } catch (error) {
       console.error('Error generating images:', error);
@@ -79,6 +91,8 @@ const ProductPage: React.FC = () => {
       setGeneratedImageGroups(prevGroups => prevGroups.filter(group => group.id !== 'placeholder'));
     } finally {
       setIsGenerating(false);
+      // Remove any remaining placeholder groups
+      setGeneratedImageGroups(prevGroups => prevGroups.filter(group => group.id !== 'placeholder'));
     }
   }, [product, prompt, toast, generateImageAPI]);
 
@@ -109,23 +123,24 @@ const ProductPage: React.FC = () => {
       );
 
       // Poll for the refined image
-      const refinedResult = await generateImageAPI.pollGenerationJob(result.generationJobId);
-
-      if (refinedResult.generationJob.status === 'completed' && refinedResult.imageGroups) {
-        const updatedGroup = refinedResult.imageGroups![0];
-        setGeneratedImageGroups(prevGroups => 
-          prevGroups.map(prevGroup => 
-            prevGroup.id === group.id ? updatedGroup : prevGroup
-          )
-        );
-        
-        // Update fullscreenGroup if it's currently being viewed
-        if (fullscreenGroup && fullscreenGroup.id === group.id) {
-          setFullscreenGroup(updatedGroup);
-          setCurrentVersion(updatedGroup.images.length - 1);
+      for await (const refinedResult of generateImageAPI.pollGenerationJob(result.generationJobId)) {
+        if (refinedResult.generationJob.status === 'completed' && refinedResult.imageGroups) {
+          const updatedGroup = refinedResult.imageGroups[0] as ImageGroup;
+          setGeneratedImageGroups(prevGroups => 
+            prevGroups.map(prevGroup => 
+              prevGroup.id === group.id ? updatedGroup : prevGroup
+            )
+          );
+          
+          // Update fullscreenGroup if it's currently being viewed
+          if (fullscreenGroup && fullscreenGroup.id === group.id) {
+            setFullscreenGroup(updatedGroup);
+            setCurrentVersion(updatedGroup.images.length - 1);
+          }
+          break;
+        } else if (refinedResult.generationJob.status === 'error') {
+          throw new Error('Image refinement failed');
         }
-      } else {
-        throw new Error('Image refinement failed');
       }
     } catch (error) {
       console.error('Error refining image:', error);
@@ -267,10 +282,12 @@ const ProductPage: React.FC = () => {
     "A can of Calm Crunchy sparkling water on an iceberg floating in the ocean."
   ];
 
-  const getMostRecentImage = (group: ImageGroup) => {
-    return group.images.reduce((latest, current) => 
-      new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
-    );
+  const getMostRecentImage = (group: ImageGroup): GeneratedImage | undefined => {
+    return group.images
+      .filter(image => image.url && image.status === "generated")
+      .reduce<GeneratedImage | undefined>((latest, current) => 
+        !latest || new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
+      , undefined);
   };
 
   return (
@@ -325,14 +342,18 @@ const ProductPage: React.FC = () => {
                       key={index} 
                       className="aspect-square w-[300px] h-[300px] scroll-snap-align-start"
                     >
-                      {group.id === 'placeholder' ? (
+                      {group.images.length === 0 ? (
                         <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
                           <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
                         </div>
-                      ) : (
+                      ) : group.images[0].status === 'pending' ? (
+                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
+                          <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
+                        </div>
+                      ) : group.images[0].status === 'generated' ? (
                         <div className="relative group w-full h-full">
                           <img 
-                            src={getMostRecentImage(group).url} 
+                            src={getMostRecentImage(group)?.url ?? ''} 
                             alt={`Generated ${index + 1}`} 
                             className="w-full h-full object-contain rounded-lg shadow-md"
                           />
@@ -346,10 +367,18 @@ const ProductPage: React.FC = () => {
                             <Button variant="ghost" size="sm" onClick={() => handleFullScreenVersions(group, index)} className="mr-2">
                               <Maximize2 size={20} className="text-white" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDownload(getMostRecentImage(group).id, `image_${group.id}.jpg`)}>
+                            <Button variant="ghost" size="sm" onClick={() => handleDownload(getMostRecentImage(group)?.id ?? '', `image_${group.id}.jpg`)}>
                               <Download size={20} className="text-white" />
                             </Button>
                           </div>
+                        </div>
+                      ) : (
+                        <div className="relative w-full h-full bg-red-100 rounded-lg flex flex-col items-center justify-center">
+                          <XCircle className="w-8 h-8 text-red-500 mb-2" />
+                          <span className="text-red-500 mb-2">Generation failed</span>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(group.id)} className="mt-2">
+                            <Trash2 size={20} className="text-red-500" />
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -422,7 +451,7 @@ const ProductPage: React.FC = () => {
           return (
             <img 
               key={group.id} 
-              src={mostRecentImage.url} 
+              src={mostRecentImage?.url ?? ''} 
               alt={`Recent ${group.id}`} 
               className="w-24 h-24 object-cover rounded-lg shadow-md cursor-pointer"
               onClick={() => handleFullScreenVersions(group, recentImageGroups.indexOf(group))}
@@ -458,7 +487,7 @@ const ProductPage: React.FC = () => {
                   <img
                     key={index}
                     ref={index === currentVersion ? imageRef : null}
-                    src={image.url}
+                    src={image.url ?? ''}
                     alt={`Version ${index + 1}`}
                     className={`absolute top-0 left-0 w-full h-full object-contain transition-opacity duration-300 ${
                       index === currentVersion ? 'opacity-100' : 'opacity-0'

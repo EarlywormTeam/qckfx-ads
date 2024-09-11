@@ -13,8 +13,12 @@ export class GenerateAPI {
     return this.generateImageAPI.generateProductImage(productId, prompt, count);
   }
 
-  async pollGenerationJob(generationJobId: string, maxAttempts?: number, interval?: number): Promise<GenerationJobResponse> {
-    return this.generateImageAPI.pollGenerationJob(generationJobId, maxAttempts, interval);
+  async *pollGenerationJob(generationJobId: string, maxAttempts?: number, interval?: number): AsyncGenerator<GenerationJobResponse, GenerationJobResponse, undefined> {
+    const generator = this.generateImageAPI.pollGenerationJob(generationJobId, maxAttempts, interval);
+    for await (const response of generator) {
+      yield response;
+    }
+    return (await generator.next()).value;
   }
 
   async refineImage(imageGroupId: string, imageId: string, prompt: string): Promise<{

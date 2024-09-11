@@ -1,8 +1,9 @@
 from beanie import PydanticObjectId
-from models import GenerationJob, GeneratedImage, GeneratedImageGroup
+from models import GenerationJob, GeneratedImage, GeneratedImageGroup, ImageStatus
 from toolbox import Toolbox
 
 async def background_refine_product_image(toolbox: Toolbox, image_group_id: PydanticObjectId, image_id: PydanticObjectId, prompt: str, generation_job_id: PydanticObjectId):
+    refined_image = None
     try:
         # Get the generation job and image group from the database
         generation_job = await GenerationJob.get(generation_job_id)
@@ -26,6 +27,14 @@ async def background_refine_product_image(toolbox: Toolbox, image_group_id: Pyda
         blob_name = original_image.url.split('/')[-1]
         original_image_data = await blob_storage.download_blob(blob_name)
 
+        # Create a new GeneratedImage document for the refined image with PENDING status
+        refined_image = await GeneratedImage.create(
+            generation_job_id=generation_job.id,
+            group_id=image_group.id,
+            status=ImageStatus.PENDING
+        )
+        await refined_image.save()
+
         # Refine the image using the image service
         image_service = toolbox.services.image_service
         refined_image_data = await image_service.refine_image(
@@ -39,12 +48,9 @@ async def background_refine_product_image(toolbox: Toolbox, image_group_id: Pyda
         blob_id = await blob_storage.upload_blob(blob_name, refined_image_data[0])  # Assuming refine_image returns a list with one item
         image_url = await blob_storage.get_blob_url(blob_id)
 
-        # Create a new GeneratedImage document for the refined image
-        refined_image = await GeneratedImage.create(
-            generation_job_id=generation_job.id,
-            group_id=image_group.id,
-            url=image_url
-        )
+        # Update the refined image with the URL and status
+        refined_image.url = image_url
+        refined_image.status = ImageStatus.GENERATED
         await refined_image.save()
 
         # Update the generation job with completed status
@@ -56,6 +62,11 @@ async def background_refine_product_image(toolbox: Toolbox, image_group_id: Pyda
         if generation_job:
             await generation_job.update_status("error")
             await generation_job.add_log_entry(f"Error during image refinement: {str(e)}")
+        
+        # Delete the failed refined image if it was created
+        if refined_image:
+            await refined_image.delete()
+
         raise
 
 

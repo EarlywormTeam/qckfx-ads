@@ -1224,7 +1224,7 @@
   "235": {
     "inputs": {
       "scheduler": "karras",
-      "steps": 80,
+      "steps": 50,
       "denoise": 0.93,
       "model": [
         "297",

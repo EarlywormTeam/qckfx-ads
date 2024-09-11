@@ -1,5 +1,5 @@
 from .generation_job import GenerationJob
-from .generated_image import GeneratedImage
+from .generated_image import GeneratedImage, ImageStatus
 from .generated_image_group import GeneratedImageGroup
 from .organization import Organization, OrganizationMembership
 from .product import Product

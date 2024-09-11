@@ -17,10 +17,15 @@ export default class GenerateImageAPI extends BaseAPI {
     return result.generationJobId;
   }
 
-  async pollGenerationJob(generationJobId: string, maxAttempts = 150, interval = 2000): Promise<GenerationJobResponse> {
+  async *pollGenerationJob(generationJobId: string, maxAttempts = 150, interval = 2500): AsyncGenerator<GenerationJobResponse, GenerationJobResponse, undefined> {
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const response = await this.request('GET', `/generation/${generationJobId}`);
       const result = this.handleResponse(response, GenerationJobResponseSchema);
+
+      // Yield partial results
+      if (result.imageGroups && result.imageGroups.length > 0) {
+        yield result;
+      }
 
       if (result.generationJob.status === 'completed' || result.generationJob.status === 'error') {
         return result;

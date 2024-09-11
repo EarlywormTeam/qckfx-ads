@@ -112,6 +112,34 @@ class ImageService:
         except Exception as e:
             raise Exception(f"Error in image refinement: {str(e)}")
 
+    async def generate_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str):
+        """
+        Generate images using the Modal service and yield them as they are created.
+
+        Args:
+            prompt (str): The prompt for image generation.
+            count (int): The number of images to create in a batch.
+            product_id (str): The ID of the product.
+            gen_id (str): The generation ID.
+            lora_name (str): The name of the lora weights to use.
+            product_description (str): The description of the product.
+            trigger_word (str): The trigger word to use for the prompt.
+            detection_prompt (str): The detection prompt for the image.
+
+        Yields:
+            tuple: A tuple containing the index of the generated image and the image data.
+
+        Raises:
+            Exception: If there's an error during image generation.
+        """
+        try:
+            async for index, image_data in self.modal_service.generate_images_stream(
+                prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt
+            ):
+                yield index, image_data
+        except Exception as e:
+            raise Exception(f"Error in image generation stream: {str(e)}")
+
 # Usage example:
 # image_service = ImageService()
 # result = await image_service.remove_background("https://example.com/image.jpg")
