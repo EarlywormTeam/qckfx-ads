@@ -155,6 +155,7 @@ def ui():
     concurrency_limit=10,
     container_idle_timeout=300,
     gpu="h100",
+    keep_warm=4,
     mounts=[
         modal.Mount.from_local_file(
             Path(__file__).parent / "first_gen_workflow_api.json",

@@ -7,24 +7,24 @@ from typing import Callable, Any
 
 class ModalService:
     async def _make_dual_requests(self, url: str, payload: dict, process_response: Callable[[dict], Any]) -> Any:
-        async def make_request():
-            async with httpx.AsyncClient(follow_redirects=True) as client:
-                try:
-                    response = await client.post(url, json=payload, timeout=300.0)
-                    if response.status_code == 200:
-                        json_response = response.json()
-                        return process_response(json_response)
-                except httpx.RequestError:
-                    pass
-            return None
-
-        results = await asyncio.gather(make_request(), make_request())
+        results = await asyncio.gather(self._make_request(url, payload, process_response), self._make_request(url, payload, process_response))
         successful_result = next((result for result in results if result is not None), None)
 
         if successful_result:
             return successful_result
         else:
             raise HTTPException(status_code=500, detail="Both requests failed")
+        
+    async def _make_request(self, url: str, payload: dict, process_response: Callable[[dict], Any]) -> Any:
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            try:
+                response = await client.post(url, json=payload, timeout=400.0)
+                if response.status_code == 200:
+                    json_response = response.json()
+                    return process_response(json_response)
+            except httpx.RequestError:
+                pass
+        return None
 
     async def generate_images(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str) -> list[bytes]:
         """
@@ -66,7 +66,7 @@ class ModalService:
                     return [base64.b64decode(json_response['images'][0])]
                 return None
 
-            return await self._make_dual_requests(url, payload, process_response)
+            return await self._make_request(url, payload, process_response)
 
         # Generate 'count' number of images using individual requests
         image_data_list = await asyncio.gather(*[single_image_request() for _ in range(count)])
@@ -111,4 +111,4 @@ class ModalService:
                 return [base64.b64decode(img) for img in json_response['images']]
             return None
 
-        return await self._make_dual_requests(url, payload, process_response)
+        return await self._make_request(url, payload, process_response)

@@ -261,10 +261,10 @@ const ProductPage: React.FC = () => {
   if (!product) return <div className="p-8">Product not found</div>;
 
   const samplePrompts = [
-    "Sleek product on a minimalist white background",
-    "Product in use by a happy customer",
-    "Close-up of product features with text labels",
-    "Product displayed in a lifestyle setting"
+    "A woman on the beach holding a can of Calm Crunchy sparkling water.",
+    "A can of Calm Crunchy sparkling water falling onto a picnic blanket.",
+    "A can of Calm Crunchy sparkling water on a table with a plant.",
+    "A can of Calm Crunchy sparkling water on an iceberg floating in the ocean."
   ];
 
   const getMostRecentImage = (group: ImageGroup) => {
