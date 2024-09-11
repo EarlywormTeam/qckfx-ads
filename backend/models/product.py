@@ -19,8 +19,8 @@ class Product(Document):
     background_removed_image_id: Optional[str] = None  
     background_removed_image_url: Optional[str] = None  
     description: Optional[str] = None  
-    lora_weights_blob_id: Optional[str] = None
-    lora_weights_blob_url: Optional[str] = None
+    lora_name: Optional[str] = None
+    detection_prompt: Optional[str] = None
     trigger_word: str
 
     @staticmethod

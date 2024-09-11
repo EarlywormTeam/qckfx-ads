@@ -1,7 +1,7 @@
 {
   "6": {
     "inputs": {
-      "text": "a woman holding a can of light blue Calm Crunchy sparkling water. From top to bottom, the label reads \"SPARKLING ADAPTOGENIC WATER\" around the white strip at the top, then on the blue background: \"CRUNCHY\", logo, \"HYDRATION\", then a long gap, \"CALM\", then stacked on top of each other: \"watermelon\", in very small font: \"vegan & gluten-free\", \"12 FL OZ (355 ML)\".\n\nCrisp text, sharp lines, in focus. Correct can size and dimensions (tall and thin). ",
+      "text": "a woman holding a light blue can of Calm Crunchy sparkling water. From top to bottom, the label reads \"SPARKLING ADAPTOGENIC WATER\" around the white strip at the top, then on the blue background: \"CRUNCHY\", logo, \"HYDRATION\", then a long gap, \"CALM\", then stacked on top of each other: \"watermelon\", in very small font: \"vegan & gluten-free\", \"12 FL OZ (355 ML)\".\n\nCrisp text, sharp lines, in focus. Correct can size and dimensions (tall and thin). ",
       "clip": [
         "125",
         1
@@ -39,8 +39,8 @@
   },
   "11": {
     "inputs": {
-      "clip_name1": "t5xxl_fp16.safetensors",
-      "clip_name2": "clip_l.safetensors",
+      "clip_name1": "clip_l.safetensors",
+      "clip_name2": "t5xxl_fp16.safetensors",
       "type": "flux"
     },
     "class_type": "DualCLIPLoader",
@@ -128,7 +128,7 @@
   },
   "25": {
     "inputs": {
-      "noise_seed": 858868027682532
+      "noise_seed": 779732917675289
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -146,16 +146,6 @@
     "class_type": "FluxGuidance",
     "_meta": {
       "title": "FluxGuidance"
-    }
-  },
-  "47": {
-    "inputs": {
-      "image": "ComfyUI_temp_meczn_00006_.png",
-      "upload": "image"
-    },
-    "class_type": "LoadImage",
-    "_meta": {
-      "title": "Load Image"
     }
   },
   "65": {
@@ -204,12 +194,12 @@
   "71": {
     "inputs": {
       "width": [
-        "70",
-        6
+        "341",
+        0
       ],
       "height": [
-        "70",
-        7
+        "341",
+        0
       ],
       "position": "top-left",
       "x_offset": [
@@ -255,26 +245,13 @@
       "title": "Convert Image to Mask"
     }
   },
-  "77": {
-    "inputs": {
-      "output": "",
-      "source": [
-        "88",
-        1
-      ]
-    },
-    "class_type": "Display Any (rgthree)",
-    "_meta": {
-      "title": "Display Any (rgthree)"
-    }
-  },
   "78": {
     "inputs": {
       "width": 768,
       "height": 768,
       "upscale_method": "lanczos",
       "keep_proportion": true,
-      "divisible_by": 2,
+      "divisible_by": 8,
       "crop": "disabled",
       "image": [
         "73",
@@ -292,7 +269,7 @@
       "height": 768,
       "upscale_method": "lanczos",
       "keep_proportion": true,
-      "divisible_by": 2,
+      "divisible_by": 8,
       "crop": "disabled",
       "image": [
         "71",
@@ -307,12 +284,12 @@
   "80": {
     "inputs": {
       "x": [
-        "70",
-        3
+        "341",
+        0
       ],
       "y": [
-        "70",
-        2
+        "341",
+        0
       ],
       "resize_source": true,
       "mask": [
@@ -354,12 +331,12 @@
   "91": {
     "inputs": {
       "width": [
-        "70",
-        6
+        "341",
+        0
       ],
       "height": [
-        "70",
-        7
+        "341",
+        0
       ],
       "upscale_method": "lanczos",
       "keep_proportion": false,
@@ -460,6 +437,7 @@
   "104": {
     "inputs": {
       "image": "$104-0",
+      "block": false,
       "images": [
         "8",
         0
@@ -486,18 +464,6 @@
       "title": "Pixelwise(MASK + MASK)"
     }
   },
-  "106": {
-    "inputs": {
-      "mask": [
-        "109",
-        0
-      ]
-    },
-    "class_type": "PreviewMask_",
-    "_meta": {
-      "title": "Preview Mask ♾️Mixlab"
-    }
-  },
   "107": {
     "inputs": {
       "amount": 49,
@@ -515,6 +481,7 @@
   "108": {
     "inputs": {
       "image": "$108-0",
+      "block": false,
       "images": [
         "8",
         0
@@ -810,7 +777,7 @@
     "inputs": {
       "filename_prefix": "ComfyUI",
       "images": [
-        "195",
+        "342",
         0
       ]
     },
@@ -925,7 +892,7 @@
   },
   "192": {
     "inputs": {
-      "noise_seed": 675256835009677
+      "noise_seed": 735461557092775
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1018,7 +985,7 @@
   },
   "208": {
     "inputs": {
-      "noise_seed": 313979771923126
+      "noise_seed": 313037409288677
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1083,7 +1050,7 @@
   },
   "211": {
     "inputs": {
-      "noise_seed": 528620687687954
+      "noise_seed": 347195733647317
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1092,24 +1059,11 @@
   },
   "212": {
     "inputs": {
-      "noise_seed": 738338716044939
+      "noise_seed": 543098147322053
     },
     "class_type": "RandomNoise",
     "_meta": {
       "title": "RandomNoise"
-    }
-  },
-  "213": {
-    "inputs": {
-      "grow_mask_by": 0,
-      "vae": [
-        "10",
-        0
-      ]
-    },
-    "class_type": "VAEEncodeForInpaint",
-    "_meta": {
-      "title": "VAE Encode (for Inpainting)"
     }
   },
   "214": {
@@ -1126,84 +1080,6 @@
     "class_type": "VAEDecode",
     "_meta": {
       "title": "VAE Decode"
-    }
-  },
-  "215": {
-    "inputs": {
-      "images": [
-        "214",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "216": {
-    "inputs": {
-      "images": [
-        "129",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "218": {
-    "inputs": {
-      "images": [
-        "219",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "219": {
-    "inputs": {
-      "samples": [
-        "204",
-        0
-      ],
-      "vae": [
-        "10",
-        0
-      ]
-    },
-    "class_type": "VAEDecode",
-    "_meta": {
-      "title": "VAE Decode"
-    }
-  },
-  "222": {
-    "inputs": {
-      "output": "",
-      "source": [
-        "154",
-        0
-      ]
-    },
-    "class_type": "Display Any (rgthree)",
-    "_meta": {
-      "title": "Display Any (rgthree)"
-    }
-  },
-  "223": {
-    "inputs": {
-      "output": "",
-      "source": [
-        "154",
-        1
-      ]
-    },
-    "class_type": "Display Any (rgthree)",
-    "_meta": {
-      "title": "Display Any (rgthree)"
     }
   },
   "225": {
@@ -1348,8 +1224,8 @@
   "235": {
     "inputs": {
       "scheduler": "karras",
-      "steps": 85,
-      "denoise": 0.9,
+      "steps": 80,
+      "denoise": 0.93,
       "model": [
         "297",
         0
@@ -1362,23 +1238,11 @@
   },
   "236": {
     "inputs": {
-      "noise_seed": 281252185194933
+      "noise_seed": 856506154440925
     },
     "class_type": "RandomNoise",
     "_meta": {
       "title": "RandomNoise"
-    }
-  },
-  "237": {
-    "inputs": {
-      "images": [
-        "238",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
     }
   },
   "238": {
@@ -1594,44 +1458,6 @@
       "title": "ImageCompositeMasked"
     }
   },
-  "274": {
-    "inputs": {
-      "image": [
-        "71",
-        0
-      ]
-    },
-    "class_type": "Get Image Size",
-    "_meta": {
-      "title": "Get Image Size"
-    }
-  },
-  "275": {
-    "inputs": {
-      "output": "",
-      "source": [
-        "274",
-        0
-      ]
-    },
-    "class_type": "Display Any (rgthree)",
-    "_meta": {
-      "title": "Display Any (rgthree)"
-    }
-  },
-  "276": {
-    "inputs": {
-      "output": "",
-      "source": [
-        "274",
-        1
-      ]
-    },
-    "class_type": "Display Any (rgthree)",
-    "_meta": {
-      "title": "Display Any (rgthree)"
-    }
-  },
   "277": {
     "inputs": {
       "output": "",
@@ -1672,7 +1498,7 @@
   },
   "280": {
     "inputs": {
-      "expand": -2,
+      "expand": 0,
       "tapered_corners": false,
       "mask": [
         "266",
@@ -1720,7 +1546,7 @@
   },
   "284": {
     "inputs": {
-      "expand": -1,
+      "expand": 0,
       "tapered_corners": false,
       "mask": [
         "283",
@@ -1802,18 +1628,6 @@
       "title": "Apply ControlNet (Advanced)"
     }
   },
-  "289": {
-    "inputs": {
-      "images": [
-        "287",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
   "292": {
     "inputs": {
       "text": "",
@@ -1852,7 +1666,7 @@
   },
   "295": {
     "inputs": {
-      "text": "flux_realism A very attractive woman on the beach holding a can of Calm Crunchy sparkling water. ",
+      "text": "flux_realism A woman on the beach in a gown holding a can of Calm Crunchy sparkling water. ",
       "clip": [
         "329",
         1
@@ -1952,7 +1766,7 @@
   },
   "303": {
     "inputs": {
-      "noise_seed": 794160312613378
+      "noise_seed": 536801389958022
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1986,46 +1800,6 @@
       "title": "VAE Decode"
     }
   },
-  "306": {
-    "inputs": {
-      "images": [
-        "305",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "316": {
-    "inputs": {
-      "strength": 0.3,
-      "noise": [
-        "318",
-        0
-      ],
-      "mask": [
-        "285",
-        0
-      ]
-    },
-    "class_type": "BNK_InjectNoise",
-    "_meta": {
-      "title": "Inject Noise"
-    }
-  },
-  "318": {
-    "inputs": {
-      "width": 768,
-      "height": 768,
-      "batch_size": 1
-    },
-    "class_type": "EmptyLatentImage",
-    "_meta": {
-      "title": "Empty Latent Image"
-    }
-  },
   "319": {
     "inputs": {
       "image": [
@@ -2046,119 +1820,6 @@
       "title": "Image Registration"
     }
   },
-  "320": {
-    "inputs": {
-      "images": [
-        "323",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "321": {
-    "inputs": {
-      "scheduler": "normal",
-      "steps": 4,
-      "denoise": 0.2,
-      "model": [
-        "125",
-        0
-      ]
-    },
-    "class_type": "BasicScheduler",
-    "_meta": {
-      "title": "BasicScheduler"
-    }
-  },
-  "322": {
-    "inputs": {
-      "noise": [
-        "236",
-        0
-      ],
-      "guider": [
-        "327",
-        0
-      ],
-      "sampler": [
-        "234",
-        0
-      ],
-      "sigmas": [
-        "321",
-        0
-      ],
-      "latent_image": [
-        "233",
-        0
-      ]
-    },
-    "class_type": "SamplerCustomAdvanced",
-    "_meta": {
-      "title": "SamplerCustomAdvanced"
-    }
-  },
-  "323": {
-    "inputs": {
-      "samples": [
-        "322",
-        0
-      ],
-      "vae": [
-        "10",
-        0
-      ]
-    },
-    "class_type": "VAEDecode",
-    "_meta": {
-      "title": "VAE Decode"
-    }
-  },
-  "325": {
-    "inputs": {
-      "text": "flux_realism A woman holding a can of sparkling water. Crisp text, correct fingers and finger nails, in focus, sharp. Non-frizzy hair. Correct lighting and shading.",
-      "clip": [
-        "125",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "CLIP Text Encode (Positive Prompt)"
-    }
-  },
-  "326": {
-    "inputs": {
-      "guidance": 2.5,
-      "conditioning": [
-        "325",
-        0
-      ]
-    },
-    "class_type": "FluxGuidance",
-    "_meta": {
-      "title": "FluxGuidance"
-    }
-  },
-  "327": {
-    "inputs": {
-      "model": [
-        "125",
-        0
-      ],
-      "conditioning": [
-        "326",
-        0
-      ]
-    },
-    "class_type": "BasicGuider",
-    "_meta": {
-      "title": "BasicGuider"
-    }
-  },
   "329": {
     "inputs": {
       "lora_name": "med_intense_can.safetensors",
@@ -2176,6 +1837,93 @@
     "class_type": "LoraLoader",
     "_meta": {
       "title": "Load LoRA"
+    }
+  },
+  "331": {
+    "inputs": {
+      "original": false,
+      "latent": [
+        "248",
+        2
+      ]
+    },
+    "class_type": "DF_Get_latent_size",
+    "_meta": {
+      "title": "Get latent size"
+    }
+  },
+  "334": {
+    "inputs": {
+      "min_width": 512,
+      "image": [
+        "129",
+        0
+      ]
+    },
+    "class_type": "GetImageSize_",
+    "_meta": {
+      "title": "Get Image Size ♾️Mixlab"
+    }
+  },
+  "341": {
+    "inputs": {
+      "a": [
+        "70",
+        6
+      ],
+      "b": [
+        "70",
+        7
+      ]
+    },
+    "class_type": "JWIntegerMin",
+    "_meta": {
+      "title": "Integer Minimum"
+    }
+  },
+  "342": {
+    "inputs": {
+      "blend_percentage": 1,
+      "image_a": [
+        "195",
+        0
+      ],
+      "image_b": [
+        "272",
+        0
+      ],
+      "mask": [
+        "344",
+        0
+      ]
+    },
+    "class_type": "Image Blend by Mask",
+    "_meta": {
+      "title": "Image Blend by Mask"
+    }
+  },
+  "344": {
+    "inputs": {
+      "mask": [
+        "284",
+        0
+      ]
+    },
+    "class_type": "MaskToImage",
+    "_meta": {
+      "title": "Convert Mask to Image"
+    }
+  },
+  "345": {
+    "inputs": {
+      "images": [
+        "195",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
     }
   }
 }

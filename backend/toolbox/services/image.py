@@ -67,7 +67,7 @@ class ImageService:
         except Exception as e:
             raise Exception(f"Error in model fine-tuning: {str(e)}")
 
-    async def generate_images(self, prompt: str, count: int, product_id: str, gen_id: str) -> list:
+    async def generate_images(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str) -> list:
         """
         Generate images using the Modal service.
 
@@ -84,7 +84,7 @@ class ImageService:
             Exception: If there's an error during image generation.
         """
         try:
-            result = await self.modal_service.generate_images(prompt, count, product_id, gen_id)
+            result = await self.modal_service.generate_images(prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt)
             return result
         except Exception as e:
             raise Exception(f"Error in image generation: {str(e)}")

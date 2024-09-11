@@ -1,11 +1,12 @@
 from beanie import PydanticObjectId
-from models import GenerationJob, GeneratedImage
+from models import GenerationJob, GeneratedImage, Product
 from toolbox import Toolbox
 
 async def background_generate_product_image(toolbox: Toolbox, prompt: str, count: int, product_id: PydanticObjectId, generation_job_id: PydanticObjectId, image_group_ids: [PydanticObjectId]):
     try:
         # Get the generation job, product, and image group from the database
         generation_job = await GenerationJob.get(generation_job_id)
+        product = await Product.get(product_id)
 
         if not generation_job or not product_id or not image_group_ids:
             raise ValueError("Generation job, product, or image group not found")
@@ -16,7 +17,7 @@ async def background_generate_product_image(toolbox: Toolbox, prompt: str, count
 
         # Generate the image using the image service
         image_service = toolbox.services.image_service
-        image_data = await image_service.generate_images(prompt, count, str(product_id), str(generation_job_id))
+        image_data = await image_service.generate_images(prompt, count, str(product_id), str(generation_job_id), product.lora_name, product.description, product.trigger_word, product.detection_prompt)
 
         # Upload the generated image to blob storage
         blob_storage = toolbox.services.blob_storage

@@ -63,7 +63,7 @@ image = (  # build up a Modal Image to run ComfyUI, step by step
         python_version="3.11"
     )
     .apt_install("git", "wget")  # install git to clone ComfyUI
-    .pip_install("comfy-cli==1.1.6", "python-dotenv")  # install comfy-cli
+    .pip_install("git+https://github.com/florisvanderharst/comfy-cli.git@fix-background-run", "python-dotenv")  # install comfy-cli
     .run_commands(  # use comfy-cli to install the ComfyUI repo and its dependencies
         "comfy --skip-prompt install --nvidia",
     )
@@ -92,7 +92,7 @@ image = (  # build up a Modal Image to run ComfyUI, step by step
     .run_commands(
         "comfy node install ComfyUI-Impact-Pack",
         "comfy node install Derfuu_ComfyUI_ModdedNodes",
-        "comfy node install was-node-suite-comfyui",
+        # "comfy node install was-node-suite-comfyui",
         "comfy node install comfyui-various",
         "comfy node install ComfyUI-Image-Filters",
         "comfy node install ComfyUI-KJNodes",
@@ -109,6 +109,9 @@ image = (  # build up a Modal Image to run ComfyUI, step by step
        "comfy node install ComfyUI_Noise",
        "comfy node install comfyui-tensorops",
        "comfy node install masquerade-nodes-comfyui"
+     )
+     .run_commands(
+       "comfy node install https://github.com/EarlywormTeam/was-node-suite-comfyui.git"
      )
     # can layer additional models and custom node downloads as needed
 )
@@ -185,7 +188,7 @@ class ComfyUI:
     @modal.method()
     def infer(self, workflow_path: str = "/root/first_gen_workflow_api.json"):
         # runs the comfy run --workflow command as a subprocess
-        cmd = f"comfy run --workflow {workflow_path} --wait --timeout 1200"
+        cmd = f"comfy run --workflow {workflow_path} --wait --verbose --timeout 1200"
         subprocess.run(cmd, shell=True, check=True)
 
         # completed workflows write output images to this directory
@@ -232,13 +235,30 @@ class ComfyUI:
         gen_id = item["gen_id"]
 
         # insert the prompt
-        workflow_data["295"]["inputs"]["text"] = item["prompt"]
+        workflow_data["295"]["inputs"]["text"] = item["trigger_word"] + " " + item["prompt"]
+        workflow_data["185"]["inputs"]["text"] = item["prompt"] + "\nSharp, focused details, correct hands, fingers, and finger nails."
+        workflow_data["231"]["inputs"]["text"] = item["prompt"] + "\nCrisp text, correct fingers and finger nails, in focus, sharp. Remove artifacts. Non-frizzy hair."
 
         # set the number of images to generate
-        workflow_data["304"]["inputs"]["batch_size"] = item["count"]
+        # TODO - there's a bug here if we try to batch more than 1 it fails..
+        workflow_data["304"]["inputs"]["batch_size"] = 1 # item["count"]
 
         # give the output image a unique id per client request
         workflow_data["164"]["inputs"]["filename_prefix"] = f"{gen_id}_first_gen"
+
+        # set the lora
+        workflow_data["125"]["inputs"]["lora_name"] = item["lora_name"]
+
+        # set the product description
+        workflow_data["6"]["inputs"]["text"] = item["product_description"]
+
+        # set the detection prompt
+        workflow_data["120"]["inputs"]["Text"] = item["detection_prompt"]
+        workflow_data["128"]["inputs"]["prompt"] = item["detection_prompt"]
+        workflow_data["225"]["inputs"]["prompt"] = item["detection_prompt"]
+        workflow_data["243"]["inputs"]["prompt"] = item["detection_prompt"]
+        workflow_data["266"]["inputs"]["prompt"] = item["detection_prompt"]
+        workflow_data["283"]["inputs"]["prompt"] = item["detection_prompt"]
 
         # set the seed
         workflow_data["25"]["inputs"]["noise_seed"] = item["seed"]
