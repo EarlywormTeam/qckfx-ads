@@ -262,7 +262,7 @@ const ProductPage: React.FC = () => {
 
   const samplePrompts = [
     "A woman on the beach holding a can of Calm Crunchy sparkling water.",
-    "A can of Calm Crunchy sparkling water falling onto a picnic blanket.",
+    "A can of Calm Crunchy sparkling water at a picnic.",
     "A can of Calm Crunchy sparkling water on a table with a plant.",
     "A can of Calm Crunchy sparkling water on an iceberg floating in the ocean."
   ];
