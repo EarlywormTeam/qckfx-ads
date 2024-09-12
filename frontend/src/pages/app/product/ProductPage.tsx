@@ -69,7 +69,7 @@ const ProductPage: React.FC = () => {
               if (existingIndex !== -1) {
                 newGroups[existingIndex] = group as ImageGroup;
               } else {
-                newGroups.push(group as ImageGroup);
+                newGroups.unshift(group as ImageGroup);
               }
             });
             return newGroups.filter(group => group.id !== 'placeholder');
@@ -88,11 +88,15 @@ const ProductPage: React.FC = () => {
         variant: "destructive",
       });
       // Remove placeholder image groups on error
-      setGeneratedImageGroups(prevGroups => prevGroups.filter(group => group.id !== 'placeholder'));
+      setGeneratedImageGroups(prevGroups => prevGroups.filter(group => 
+        group.id !== 'placeholder' && group.images.some(image => image.status !== 'pending')
+      ));
     } finally {
       setIsGenerating(false);
       // Remove any remaining placeholder groups
-      setGeneratedImageGroups(prevGroups => prevGroups.filter(group => group.id !== 'placeholder'));
+      setGeneratedImageGroups(prevGroups => prevGroups.filter(group => 
+        group.id !== 'placeholder' && group.images.some(image => image.status !== 'pending')
+      ));
     }
   }, [product, prompt, toast, generateImageAPI]);
 
