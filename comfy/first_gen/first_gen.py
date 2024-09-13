@@ -234,6 +234,7 @@ class ComfyUI:
             (Path(__file__).parent / "first_gen_workflow_api.json").read_text()
         )
         gen_id = item["gen_id"]
+        seed = item["seed"]
 
         # insert the prompt
         workflow_data["295"]["inputs"]["text"] = item["trigger_word"] + " " + item["prompt"]
@@ -245,7 +246,7 @@ class ComfyUI:
         workflow_data["304"]["inputs"]["batch_size"] = 1 # item["count"]
 
         # give the output image a unique id per client request
-        workflow_data["164"]["inputs"]["filename_prefix"] = f"{gen_id}_first_gen"
+        workflow_data["164"]["inputs"]["filename_prefix"] = f"{gen_id}_{seed}_first_gen"
 
         # set the lora
         workflow_data["125"]["inputs"]["lora_name"] = item["lora_name"]
@@ -262,16 +263,16 @@ class ComfyUI:
         workflow_data["283"]["inputs"]["prompt"] = item["detection_prompt"]
 
         # set the seed
-        workflow_data["25"]["inputs"]["noise_seed"] = item["seed"]
-        workflow_data["192"]["inputs"]["noise_seed"] = item["seed"]
-        workflow_data["208"]["inputs"]["noise_seed"] = item["seed"]
-        workflow_data["211"]["inputs"]["noise_seed"] = item["seed"]
-        workflow_data["212"]["inputs"]["noise_seed"] = item["seed"]
-        workflow_data["236"]["inputs"]["noise_seed"] = item["seed"]
-        workflow_data["303"]["inputs"]["noise_seed"] = item["seed"]
+        workflow_data["25"]["inputs"]["noise_seed"] = seed
+        workflow_data["192"]["inputs"]["noise_seed"] = seed
+        workflow_data["208"]["inputs"]["noise_seed"] = seed
+        workflow_data["211"]["inputs"]["noise_seed"] = seed
+        workflow_data["212"]["inputs"]["noise_seed"] = seed
+        workflow_data["236"]["inputs"]["noise_seed"] = seed
+        workflow_data["303"]["inputs"]["noise_seed"] = seed
 
         # save this updated workflow to a new file
-        new_workflow_file = f"{gen_id}_first_gen.json"
+        new_workflow_file = f"{gen_id}_{seed}_first_gen.json"
         json.dump(workflow_data, Path(new_workflow_file).open("w"))
 
         # run inference on the currently running container
