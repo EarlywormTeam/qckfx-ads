@@ -79,16 +79,15 @@ class ModalService:
 
         return all_images
 
-    async def refine_image(self, image_data: bytes, prompt: str, gen_id: str) -> list[bytes]:
+    async def refine_image(self, image_data: bytes, original_prompt: str, product_description: str, gen_id: str) -> list[bytes]:
         """
         Send a request to refine an image using the Modal service.
 
         Args:
             image_data (bytes): The image data to refine.
-            prompt (str): The prompt for image refinement.
+            original_prompt (str): The original prompt used for image generation.
+            product_description (str): The product description for refinement.
             gen_id (str): The generation ID.
-            noise_strength (float, optional): The strength of noise to inject. Defaults to 0.
-            denoise_amount (float, optional): The amount of denoising to apply. Defaults to 0.9.
 
         Returns:
             list[bytes]: A list of refined image data.
@@ -99,8 +98,8 @@ class ModalService:
         url = "https://christopherhwood--product-shoot-comfyui-refine-object.modal.run"
         seed = random.randint(0, 2**32 - 1)
         payload = {
-            "prompt": 'A photo of a can of Calm Crunchy sparkling water. From top to bottom, the label reads "SPARKLING ADAPTOGENIC WATER" around the white strip at the top, then on the blue background: "CRUNCHY", logo, "HYDRATION", "CALM", "watermelon", "vegan & gluten-free", "12 FL OZ (355 ML)"',
-            "original_prompt": prompt,
+            "prompt": product_description,  # Use the product description as the main prompt
+            "original_prompt": original_prompt,  # Include the original prompt
             "gen_id": gen_id,
             "seed": seed,
             "image": base64.b64encode(image_data).decode('utf-8')

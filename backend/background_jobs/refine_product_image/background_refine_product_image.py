@@ -1,5 +1,5 @@
 from beanie import PydanticObjectId
-from models import GenerationJob, GeneratedImage, GeneratedImageGroup, ImageStatus
+from models import GenerationJob, GeneratedImage, GeneratedImageGroup, ImageStatus, Product
 from toolbox import Toolbox
 
 async def background_refine_product_image(toolbox: Toolbox, image_group_id: PydanticObjectId, image_id: PydanticObjectId, prompt: str, generation_job_id: PydanticObjectId):
@@ -25,7 +25,17 @@ async def background_refine_product_image(toolbox: Toolbox, image_group_id: Pyda
         blob_storage = toolbox.services.blob_storage
         # Get the blob name from the last part of the URL path and remove the extension
         blob_name = original_image.url.split('/')[-1]
-        original_image_data = await blob_storage.download_blob(blob_name)
+        original_image_data = await blob_storage.download_blob(blob_name)        
+
+        # Get the product associated with the generation job
+        product = await Product.get(generation_job.product_id)
+        if not product:
+            raise ValueError("Product not found")
+
+        # Get the product description and throw an error if it's empty
+        product_description = product.description
+        if not product_description:
+            raise ValueError("Product description is empty")
 
         # Create a new GeneratedImage document for the refined image with PENDING status
         refined_image = await GeneratedImage.create(
@@ -39,7 +49,8 @@ async def background_refine_product_image(toolbox: Toolbox, image_group_id: Pyda
         image_service = toolbox.services.image_service
         refined_image_data = await image_service.refine_image(
             original_image_data, 
-            prompt, 
+            prompt,  # This is the original prompt
+            product_description,  # This is the product description
             str(generation_job_id)
         )
 
