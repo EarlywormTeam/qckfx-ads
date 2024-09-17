@@ -16,7 +16,7 @@ export const ImageGroupSchema = z.object({
 
 export const GenerationJobSchema = z.object({
   id: z.string(),
-  status: z.enum(['pending', 'in_progress', 'completed', 'error']),
+  status: z.enum(['pending', 'in_progress', 'completed', 'error', 'failed']),
   // Add other relevant fields as needed
 });
 

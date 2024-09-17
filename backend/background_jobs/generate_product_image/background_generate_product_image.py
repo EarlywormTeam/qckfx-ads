@@ -19,6 +19,7 @@ async def background_generate_product_image(toolbox: Toolbox, prompt: str, count
         image_service = toolbox.services.image_service
         image_generator = image_service.generate_images_stream(prompt, count, str(product_id), str(generation_job_id), product.lora_name, product.description, product.trigger_word, product.detection_prompt)
 
+        print(image_generator, "image_generator")
         # Upload the generated image to blob storage
         blob_storage = toolbox.services.blob_storage
 
@@ -26,6 +27,7 @@ async def background_generate_product_image(toolbox: Toolbox, prompt: str, count
         # Process each image as it's generated
         async for index, image_datum in image_generator:
             try:
+                print(index, image_datum, "image_datum")
                 # Create a new GeneratedImage document for each expected image
                 generated_image = await GeneratedImage.create(
                     generation_job_id=generation_job.id,

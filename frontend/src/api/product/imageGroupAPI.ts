@@ -14,6 +14,10 @@ export default class ImageGroupAPI extends BaseAPI {
     return result.imageGroups;
   }
 
+  async setDefaultImage(imageGroupId: string, imageId: string): Promise<void> {
+    await this.request('POST', `/image_group/${imageGroupId}/set_default_image/${imageId}`);
+  }
+  
   async deleteImageGroup(productId: string, groupId: string): Promise<void> {
     await this.request('DELETE', `/product/${productId}/image-group/${groupId}`);
   }

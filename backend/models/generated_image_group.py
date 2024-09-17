@@ -13,6 +13,7 @@ class GeneratedImageGroup(Document):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     deleted: Optional[DeletionInfo] = Field(default=None)
+    default_image_id: Optional[PydanticObjectId] = None
 
     class Settings:
         name = "generated_image_groups"
@@ -37,4 +38,8 @@ class GeneratedImageGroup(Document):
             time=datetime.utcnow(),
             user_id=user_id
         )
+        await self.save()
+
+    async def set_default_image(self, image_id: PydanticObjectId):
+        self.default_image_id = image_id
         await self.save()

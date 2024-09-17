@@ -51,6 +51,10 @@ export class ProductAPI {
   async downloadImage(imageId: string): Promise<Blob> {
     return this.imageGroupAPI.downloadImage(imageId);
   }
+
+  async setDefaultImage(imageGroupId: string, imageId: string): Promise<void> {
+    return this.imageGroupAPI.setDefaultImage(imageGroupId, imageId);
+  }
 }
 
 export function useProductAPI() {

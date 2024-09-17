@@ -29,7 +29,7 @@ function App() {
       try {
         const response = await fetch('/api/auth/status', {
           credentials: 'include'
-        });
+        });    
         if (response.ok) {
           const data = await response.json();
           setOrganizations(data.organizations);

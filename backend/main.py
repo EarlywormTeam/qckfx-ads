@@ -354,7 +354,9 @@ async def auth_status(request: Request, session: dict = Depends(verify_session))
             organization = await workos_client.organizations.get_organization(
                 organization_id=org_membership.organization_id
             )
+
             existing_org = await Organization.find_one(Organization.workos_id == organization.id)
+
             if not existing_org:
                 org = Organization.from_workos(organization.model_dump())
                 await org.save()
@@ -365,6 +367,7 @@ async def auth_status(request: Request, session: dict = Depends(verify_session))
                 OrganizationMembership.user_id == user.id,
                 OrganizationMembership.organization_id == org.id
             )
+
             if not existing_membership:
                 org_membership = OrganizationMembership.from_workos(org_membership.model_dump(), user, org)
                 await org_membership.save()
@@ -492,6 +495,20 @@ async def download_image(request: Request, image_id: str, session: dict = Depend
             "Content-Disposition": f"attachment; filename=generated_image_{image_id}.jpg"
         }
     )
+
+@app.post("/api/image_group/{image_group_id}/set_default_image/{image_id}")
+async def set_default_image(image_group_id: str, image_id: str, session: dict = Depends(verify_session)):
+    image_group = await GeneratedImageGroup.get(image_group_id)
+    if not image_group:
+        raise HTTPException(status_code=404, detail="Image group not found")
+
+    image = await GeneratedImage.get(image_id)
+    if not image or image.group_id != image_group.id:
+        raise HTTPException(status_code=404, detail="Image not found in this group")
+
+    await image_group.set_default_image(image.id)
+    
+    return {"message": "Default image set successfully"}
 
 #############################################################################
 ## KEEP THESE AT THE BOTTOM OF THE FILE. PUT EVERYTHING ELSE ABOVE HERE!!! ##

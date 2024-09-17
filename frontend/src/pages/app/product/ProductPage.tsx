@@ -58,13 +58,16 @@ const ProductPage: React.FC = () => {
 
     try {
       const generationJobId = await generateImageAPI.generateProductImage(product!.id, prompt, 4);
+      console.log(generationJobId, "generationJobId")
       const generator = generateImageAPI.pollGenerationJob(generationJobId);
+      console.log(generator, "generator")
 
       for await (const result of generator) {
         if (result.imageGroups) {
           setGeneratedImageGroups(prevGroups => {
             const newGroups = [...prevGroups];
             result.imageGroups!.forEach(group => {
+              console.log(group, "group")
               const existingIndex = newGroups.findIndex(g => g.id === group.id);
               if (existingIndex !== -1) {
                 newGroups[existingIndex] = group as ImageGroup;
@@ -240,6 +243,33 @@ const ProductPage: React.FC = () => {
       });
     }
   }, [productAPI, toast]);
+
+  const handleSetDefaultImage = useCallback(async () => {
+    if (fullscreenGroup && fullscreenGroup.images[currentVersion]) {
+      try {
+        await productAPI.setDefaultImage(fullscreenGroup.id, fullscreenGroup.images[currentVersion].id);
+        toast({
+          title: "Success",
+          description: "Default image set successfully",
+        });
+        // Optionally, update the local state to reflect the change
+        setGeneratedImageGroups(prevGroups => 
+          prevGroups.map(group => 
+            group.id === fullscreenGroup.id 
+              ? {...group, default_image_id: fullscreenGroup.images[currentVersion].id} 
+              : group
+          )
+        );
+      } catch (error) {
+        console.error('Error setting default image:', error);
+        toast({
+          title: "Error",
+          description: "Failed to set default image. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [fullscreenGroup, currentVersion, productAPI, toast]);
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
@@ -568,7 +598,12 @@ const ProductPage: React.FC = () => {
                   {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw size={20} className="mr-2" />}
                   {isGenerating ? 'Refining...' : 'Refine'}
                 </Button>
-                <Button className="bg-background-action text-text-black hover:bg-background-action/80">Use This Version</Button>
+                <Button 
+                  className="bg-background-action text-text-black hover:bg-background-action/80"
+                  onClick={handleSetDefaultImage}
+                >
+                  Use This Version
+                </Button>
               </div>
             </div>
           </div>

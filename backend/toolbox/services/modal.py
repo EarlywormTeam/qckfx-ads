@@ -148,9 +148,11 @@ class ModalService:
                 "detection_prompt": detection_prompt
             }
 
+            print(payload, "payload")
             async with httpx.AsyncClient(follow_redirects=True) as client:
                 try:
                     response = await client.post(url, json=payload, timeout=400.0)
+                    print(response, "response")
                     if response.status_code == 200:
                         json_response = response.json()
                         if 'images' in json_response and json_response['images']:
