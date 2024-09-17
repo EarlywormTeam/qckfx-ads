@@ -45,7 +45,7 @@ class ModalService:
         Raises:
             HTTPException: If all requests fail or return unexpected status codes.
         """
-        url = "https://christopherhwood--product-shoot-comfyui-first-gen.modal.run"
+        url = "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run"
         
         async def single_image_request():
             seed = random.randint(0, 2**32 - 1)
@@ -95,7 +95,7 @@ class ModalService:
         Raises:
             HTTPException: If the request fails or returns an unexpected status code.
         """
-        url = "https://christopherhwood--product-shoot-comfyui-refine-object.modal.run"
+        url = "https://earlywormteam--product-shoot-comfyui-refine-object.modal.run"
         seed = random.randint(0, 2**32 - 1)
         payload = {
             "prompt": product_description,  # Use the product description as the main prompt
@@ -132,7 +132,7 @@ class ModalService:
         Raises:
             HTTPException: If all requests fail or return unexpected status codes.
         """
-        url = "https://christopherhwood--product-shoot-comfyui-first-gen.modal.run"
+        url = "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run"
         
         async def single_image_request(index: int):
             seed = random.randint(0, 2**32 - 1)
