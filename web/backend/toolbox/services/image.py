@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from dotenv import load_dotenv
 import replicate
 import fal_client
@@ -111,7 +112,7 @@ class ImageService:
         except Exception as e:
             raise Exception(f"Error in image refinement: {str(e)}")
 
-    async def generate_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str):
+    async def generate_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str, image_name: Optional[str] = None):
         """
         Generate images using the Modal service and yield them as they are created.
 
@@ -133,7 +134,7 @@ class ImageService:
         """
         try:
             async for index, image_data in self.modal_service.generate_images_stream(
-                prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt
+                prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt, image_name
             ):
                 yield index, image_data
         except Exception as e:

@@ -113,6 +113,11 @@ image = (  # build up a Modal Image to run ComfyUI, step by step
      .run_commands(
        "comfy node install https://github.com/EarlywormTeam/was-node-suite-comfyui.git"
      )
+     .run_commands(
+         "wget --header=\"Authorization: Bearer {os.getenv('REPLICATE_API_TOKEN')}\" -P /models/loras/crunchy_rebrand_bliss https://replicate.delivery/yhqm/CNB0yyuRjlYXNV88Dj2nShhndcfNeMH9uUZ7SQIosLnwimdTA/trained_model.tar",
+        "tar -xvf /models/loras/crunchy_rebrand_bliss/trained_model.tar -C /models/loras/crunchy_rebrand_bliss",
+        "mv /models/loras/crunchy_rebrand_bliss/output/flux_train_replicate/lora.safetensors /root/comfy/ComfyUI/models/loras/crunchy_rebrand_bliss.safetensors && rm -rf /models"
+     ) 
     # can layer additional models and custom node downloads as needed
 )
 
@@ -178,6 +183,10 @@ def ui():
             Path(__file__).parent / "can.png",
             "/root/comfy/ComfyUI/input/can.png",
         ),
+        modal.Mount.from_local_file(
+            Path(__file__).parent / "crunchy_rebrand_bliss.png",
+            "/root/comfy/ComfyUI/input/crunchy_rebrand_bliss.png",
+        )
     ],
 )
 class ComfyUI:
@@ -253,6 +262,10 @@ class ComfyUI:
 
         # set the product description
         workflow_data["6"]["inputs"]["text"] = item["product_description"]
+
+        # set the input image
+        image_name = item.get("image_name", "can.png")
+        workflow_data["130"]["inputs"]["image"] = image_name
 
         # set the detection prompt
         workflow_data["120"]["inputs"]["Text"] = item["detection_prompt"]
