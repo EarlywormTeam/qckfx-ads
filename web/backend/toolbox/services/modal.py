@@ -3,7 +3,7 @@ from fastapi import HTTPException
 import base64
 import random
 import asyncio
-from typing import Callable, Any, AsyncGenerator
+from typing import Callable, Any, AsyncGenerator, Optional
 
 class ModalService:
     async def _make_dual_requests(self, url: str, payload: dict, process_response: Callable[[dict], Any]) -> Any:
@@ -45,7 +45,7 @@ class ModalService:
         Raises:
             HTTPException: If all requests fail or return unexpected status codes.
         """
-        url = "https://christopherhwood--product-shoot-comfyui-first-gen.modal.run"
+        url = "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run"
         
         async def single_image_request():
             seed = random.randint(0, 2**32 - 1)
@@ -95,7 +95,7 @@ class ModalService:
         Raises:
             HTTPException: If the request fails or returns an unexpected status code.
         """
-        url = "https://christopherhwood--product-shoot-comfyui-refine-object.modal.run"
+        url = "https://earlywormteam--product-shoot-comfyui-refine-object.modal.run"
         seed = random.randint(0, 2**32 - 1)
         payload = {
             "prompt": product_description,  # Use the product description as the main prompt
@@ -112,7 +112,7 @@ class ModalService:
 
         return await self._make_request(url, payload, process_response)
 
-    async def generate_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str) -> AsyncGenerator[tuple[int, bytes | None], None]:
+    async def generate_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str, image_name: Optional[str] = None) -> AsyncGenerator[tuple[int, bytes | None], None]:
         """
         Send multiple requests to generate images using the Modal service and yield them as they are created.
 
@@ -132,7 +132,7 @@ class ModalService:
         Raises:
             HTTPException: If all requests fail or return unexpected status codes.
         """
-        url = "https://christopherhwood--product-shoot-comfyui-first-gen.modal.run"
+        url = "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run"
         
         async def single_image_request(index: int):
             seed = random.randint(0, 2**32 - 1)
@@ -145,7 +145,8 @@ class ModalService:
                 "lora_name": lora_name,
                 "product_description": product_description,
                 "trigger_word": trigger_word,
-                "detection_prompt": detection_prompt
+                "detection_prompt": detection_prompt,
+                "image_name": image_name
             }
 
             print(payload, "payload")

@@ -22,6 +22,7 @@ class Product(Document):
     lora_name: Optional[str] = None
     detection_prompt: Optional[str] = None
     trigger_word: str
+    image_name: Optional[str] = None
 
     @staticmethod
     def generate_trigger_word():

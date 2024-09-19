@@ -17,7 +17,7 @@ async def background_generate_product_image(toolbox: Toolbox, prompt: str, count
 
         # Generate the image using the image service
         image_service = toolbox.services.image_service
-        image_generator = image_service.generate_images_stream(prompt, count, str(product_id), str(generation_job_id), product.lora_name, product.description, product.trigger_word, product.detection_prompt)
+        image_generator = image_service.generate_images_stream(prompt, count, str(product_id), str(generation_job_id), product.lora_name, product.description, product.trigger_word, product.detection_prompt, product.image_name)
 
         print(image_generator, "image_generator")
         # Upload the generated image to blob storage
