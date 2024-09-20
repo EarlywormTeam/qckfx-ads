@@ -2,6 +2,7 @@ from beanie import Document, Indexed, PydanticObjectId
 from pydantic import Field, BaseModel
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 class ImageStatus(str, Enum):
     PENDING = "pending"
@@ -11,7 +12,7 @@ class ImageStatus(str, Enum):
 class GeneratedImage(Document):
     generation_job_id: Indexed(PydanticObjectId)
     group_id: Indexed(PydanticObjectId)
-    url: str | None = None
+    url: Optional[str] = None
     status: ImageStatus = ImageStatus.PENDING
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

@@ -112,7 +112,7 @@ class ModalService:
 
         return await self._make_request(url, payload, process_response)
 
-    async def generate_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str, image_name: Optional[str] = None) -> AsyncGenerator[tuple[int, bytes | None], None]:
+    async def generate_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str, image_name: Optional[str] = None) -> AsyncGenerator[tuple[int, Optional[bytes]], None]:
         """
         Send multiple requests to generate images using the Modal service and yield them as they are created.
 
@@ -149,11 +149,9 @@ class ModalService:
                 "image_name": image_name
             }
 
-            print(payload, "payload")
             async with httpx.AsyncClient(follow_redirects=True) as client:
                 try:
                     response = await client.post(url, json=payload, timeout=400.0)
-                    print(response, "response")
                     if response.status_code == 200:
                         json_response = response.json()
                         if 'images' in json_response and json_response['images']:

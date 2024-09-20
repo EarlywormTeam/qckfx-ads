@@ -4,12 +4,13 @@ import toolbox.services.blob_storage as blob_storage
 import toolbox.services.image as image
 import toolbox.services.logger as logger
 import toolbox.services.llm as llm
+from typing import Optional
 
 class Services:
-    _blob_storage: blob_storage.BlobStorageService | None = None
-    _logger: logger.Logger | None = None
-    _llm: llm.LLMService | None = None
-    _image_service: image.ImageService | None = None
+    _blob_storage: Optional[blob_storage.BlobStorageService] = None
+    _logger: Optional[logger.Logger] = None
+    _llm: Optional[llm.LLMService] = None
+    _image_service: Optional[image.ImageService] = None
 
     def __init__(self):
         load_dotenv()  # Load environment variables from .env file
