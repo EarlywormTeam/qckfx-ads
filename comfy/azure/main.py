@@ -70,23 +70,21 @@ def find_output_images(file_prefix: str) -> List[bytes]:
             image_bytes_list.append(f.read_bytes())
     return image_bytes_list
 
-def launch_comfyui(cuda_device: str):
+def launch_comfyui():
     """Launch ComfyUI as a subprocess."""
-    cmd = f"comfy launch -- --listen 0.0.0.0 --port 8000 --cuda-device {cuda_device}"
+    cmd = f"comfy launch -- --listen 0.0.0.0 --port 8000"
     subprocess.Popen(cmd, shell=True, cwd=COMFYUI_DIR)
-    print(f"ComfyUI launched on CUDA device {cuda_device}.")
+    print(f"ComfyUI launched.")
 
 # Event Handlers
 @app.on_event("startup")
 def startup_event():
     """Launch ComfyUI when the FastAPI app starts."""
-    cuda_device = os.getenv("CUDA_DEVICE", "0")  # Default to "0" if not set
     try:
         subprocess.run("curl --silent http://localhost:8000", shell=True, check=True)
         print("ComfyUI is already running.")
     except subprocess.CalledProcessError:
-        print(f"Launching ComfyUI on CUDA device {cuda_device}...")
-        launch_comfyui(cuda_device)
+        launch_comfyui()
 
 # API Endpoints
 @app.post("/first_gen")
