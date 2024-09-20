@@ -117,7 +117,25 @@ image = (  # build up a Modal Image to run ComfyUI, step by step
          "wget --header=\"Authorization: Bearer {os.getenv('REPLICATE_API_TOKEN')}\" -P /models/loras/crunchy_rebrand_bliss https://replicate.delivery/yhqm/CNB0yyuRjlYXNV88Dj2nShhndcfNeMH9uUZ7SQIosLnwimdTA/trained_model.tar",
         "tar -xvf /models/loras/crunchy_rebrand_bliss/trained_model.tar -C /models/loras/crunchy_rebrand_bliss",
         "mv /models/loras/crunchy_rebrand_bliss/output/flux_train_replicate/lora.safetensors /root/comfy/ComfyUI/models/loras/crunchy_rebrand_bliss.safetensors && rm -rf /models"
-     ) 
+     )
+     .run_commands(
+         "comfy --skip-prompt model download --url https://huggingface.co/Justin-Choo/epiCRealism-Natural_Sin_RC1_VAE/resolve/main/epicrealism_naturalSinRC1VAE.safetensors --relative-path models/checkpoints/sd1",
+         # "comfy --skip-prompt model download --url https://huggingface.co/huchenlei/IC-Light-ldm/resolve/main/iclight_sd15_fc_unet_ldm.safetensors?download=true --relative-path models/unet/sd1",
+         "mkdir -p /root/comfy/ComfyUI/models/checkpoints/sdxl",
+         "wget -O /root/comfy/ComfyUI/models/checkpoints/sdxl/juggernautXL_v9Rdphoto2Lightning.safetensors \"https://civitai.com/api/download/models/782002?type=Model&format=SafeTensor&size=full&fp=fp16\"",
+         # "comfy --skip-prompt model download --url https://civitai.com/api/download/models/782002?type=Model&format=SafeTensor&size=full&fp=fp16 --relative-path models/checkpoints/sdxl",
+         # "mkdir /root/comfy/ComfyUI/models/controlnet/sdxl/control-LoRAs-rank128",
+         "comfy --skip-prompt model download --url https://huggingface.co/stabilityai/control-lora/resolve/main/control-LoRAs-rank128/control-lora-canny-rank128.safetensors --relative-path models/controlnet/sdxl/control-LoRAs-rank128"
+     )
+     .run_commands(
+         "comfy node install ComfyUI_LayerStyle",
+         "comfy node install ComfyUI-IC-Light",
+         "comfy node install CharacterFaceSwap",
+         "comfy node install mikey_nodes"
+     )
+     .run_commands(
+         "comfy --skip-prompt model download --url https://huggingface.co/Shakker-Labs/FLUX.1-dev-LoRA-AntiBlur/resolve/main/FLUX-dev-lora-AntiBlur.safetensors --relative-path models/loras" 
+     )
     # can layer additional models and custom node downloads as needed
 )
 
@@ -137,6 +155,10 @@ app = modal.App(name="product-shoot", image=image)
         modal.Mount.from_local_file(
             Path(__file__).parent / "image-registration-node.py",
             "/root/comfy/ComfyUI/custom_nodes/image-registration-node.py"
+        ),
+        modal.Mount.from_local_file(
+            Path(__file__).parent / "iclight_sd15_fc_unet_ldm.safetensors",
+            "/root/comfy/ComfyUI/models/unet/sd1/iclight_sd15_fc_unet_ldm.safetensors"
         ),
     ],
 )
@@ -186,7 +208,11 @@ def ui():
         modal.Mount.from_local_file(
             Path(__file__).parent / "crunchy_rebrand_bliss.png",
             "/root/comfy/ComfyUI/input/crunchy_rebrand_bliss.png",
-        )
+        ),
+        modal.Mount.from_local_file(
+            Path(__file__).parent / "first_gen_workflow_api_beta.json",
+            "/root/first_gen_workflow_api_beta.json"
+        ),
     ],
 )
 class ComfyUI:
@@ -239,6 +265,7 @@ class ComfyUI:
         from fastapi.responses import JSONResponse
         import base64
 
+        workflow_name = item.get("workflow_name", "first_gen_workflow_api.json")
         workflow_data = json.loads(
             (Path(__file__).parent / "first_gen_workflow_api.json").read_text()
         )

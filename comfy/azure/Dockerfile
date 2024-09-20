@@ -1,14 +1,15 @@
 # ================================
 # Stage 1: Base Image with Comfy 
 # ================================
-FROM python:3.11-slim AS base
+ARG CUDA_DEVICE
+FROM python:3.12-slim AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV CUDA_DEVICE=${CUDA_DEVICE}
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get clean && apt-get update && apt-get install -y --no-install-recommends \
     git \
     wget \
     curl \
@@ -20,16 +21,16 @@ WORKDIR /app
 
 # Install comfy-cli and other Python dependencies
 RUN pip install --upgrade pip
-RUN pip install git+https://github.com/florisvanderharst/comfy-cli.git@fix-background-run python-dotenv
+RUN pip install comfy-cli
 
 # Clone ComfyUI repository
-RUN git clone https://github.com/comfyanonymous/ComfyUI.git
+# RUN git clone https://github.com/comfyanonymous/ComfyUI.git
 
 # Set working directory to ComfyUI
-WORKDIR /app/ComfyUI
+# WORKDIR /app/ComfyUI
 
 # Install ComfyUI dependencies
-RUN comfy --skip-prompt install --nvidia
+RUN comfy --here --skip-prompt install --nvidia
 
 # ================================
 # Stage 1: Install Models
@@ -110,6 +111,8 @@ RUN pip install -r requirements.txt
 
 # Expose necessary ports
 EXPOSE 8000
+
+ENV CUDA_DEVICE=${CUDA_DEVICE}
 
 # Command to run the FastAPI application
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
