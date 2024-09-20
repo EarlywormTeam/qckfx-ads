@@ -163,7 +163,12 @@ const ProductPage: React.FC = () => {
 
   const handleFullScreenVersions = (group: ImageGroup, index: number) => {
     setFullscreenGroup(group);
-    setCurrentVersion(group.images.length - 1);
+    let currentVersionIndex = group.images.length - 1
+    let defaultImage = getDefaultImage(group);
+    if (defaultImage) {
+      currentVersionIndex = group.images.indexOf(defaultImage);
+    }
+    setCurrentVersion(currentVersionIndex);
     setCurrentGroupIndex(index);
   };
 
@@ -227,7 +232,12 @@ const ProductPage: React.FC = () => {
     
     setCurrentGroupIndex(newIndex);
     setFullscreenGroup(generatedImageGroups[newIndex]);
-    setCurrentVersion(generatedImageGroups[newIndex].images.length - 1);
+    let currentVersionIndex = generatedImageGroups[newIndex].images.length - 1
+    let defaultImage = getDefaultImage(generatedImageGroups[newIndex]);
+    if (defaultImage) {
+      currentVersionIndex = generatedImageGroups[newIndex].images.indexOf(defaultImage);
+    }
+    setCurrentVersion(currentVersionIndex);
   };
 
   const handleDownload = useCallback(async (imageId: string, filename: string) => {
@@ -256,7 +266,7 @@ const ProductPage: React.FC = () => {
         setGeneratedImageGroups(prevGroups => 
           prevGroups.map(group => 
             group.id === fullscreenGroup.id 
-              ? {...group, default_image_id: fullscreenGroup.images[currentVersion].id} 
+              ? {...group, defaultImageId: fullscreenGroup.images[currentVersion].id} 
               : group
           )
         );
@@ -324,6 +334,34 @@ const ProductPage: React.FC = () => {
       , undefined);
   };
 
+  const getDefaultImage = (group: ImageGroup): GeneratedImage | undefined => {
+    return group.images
+    .filter(image => image.url && image.status === "generated" && image.id === group.defaultImageId)[0];
+  }
+
+  useEffect(() => {
+    if (!fullscreenGroup) {
+      return;
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft') {
+        // Simulate clicking the previous page button (ChevronLeft)
+        handleFullScreenNavigation('prev');
+      } else if (event.key === 'ArrowRight') {
+        // Simulate clicking the next page button (ChevronRight)
+        handleFullScreenNavigation('next');
+      }
+    };
+
+    // Attach event listener for keydown
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Clean up event listener on unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [fullscreenGroup, handleFullScreenNavigation, generatedImageGroups]);
+
   return (
     <div className="p-4 max-w-6xl mx-auto">
       <div className="flex items-start mb-4">
@@ -387,22 +425,23 @@ const ProductPage: React.FC = () => {
                       ) : group.images[0].status === 'generated' ? (
                         <div className="relative group w-full h-full">
                           <img 
-                            src={getMostRecentImage(group)?.url ?? ''} 
+                            src={group.defaultImageId ? getDefaultImage(group)?.url ?? '' : getMostRecentImage(group)?.url ?? ''} 
                             alt={`Generated ${index + 1}`} 
                             className="w-full h-full object-contain rounded-lg shadow-md"
                           />
+
                           <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(group.id)} className="mr-2">
-                              <Trash2 size={20} className="text-white" />
+                            <Button variant="ghost" size="sm" onClick={() => handleDelete(group.id)} className="mr-2 hover:bg-gray-400">
+                              <Trash2 size={20} className="text-white hover:text-black" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleRefine(group)} className="mr-2">
-                              <RefreshCw size={20} className="text-white" />
+                            <Button variant="ghost" size="sm" onClick={() => handleRefine(group)} className="mr-2 hover:bg-gray-400">
+                              <RefreshCw size={20} className="text-white hover:text-black" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleFullScreenVersions(group, index)} className="mr-2">
-                              <Maximize2 size={20} className="text-white" />
+                            <Button variant="ghost" size="sm" onClick={() => handleFullScreenVersions(group, index)} className="mr-2 hover:bg-gray-400">
+                              <Maximize2 size={20} className="text-white hover:text-black" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDownload(getMostRecentImage(group)?.id ?? '', `image_${group.id}.jpg`)}>
-                              <Download size={20} className="text-white" />
+                            <Button variant="ghost" size="sm" onClick={() => handleDownload(group.defaultImageId ? getDefaultImage(group)?.id ?? '' : getMostRecentImage(group)?.id ?? '', `image_${group.id}.jpg`)} className="mr-2 hover:bg-gray-400">
+                              <Download size={20} className="text-white hover:text-black" />
                             </Button>
                           </div>
                         </div>
