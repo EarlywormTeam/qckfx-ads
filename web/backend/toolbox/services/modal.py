@@ -3,9 +3,19 @@ from fastapi import HTTPException
 import base64
 import random
 import asyncio
+import os
 from typing import Callable, Any, AsyncGenerator, Optional
 
 class ModalService:
+    def __init__(self):
+        self.environment = os.getenv("ENV", "development")
+        self.production_urls = [
+            "http://localhost:8001",
+            "http://localhost:8002",
+            "http://localhost:8003",
+            "http://localhost:8004"
+        ]
+
     async def _make_dual_requests(self, url: str, payload: dict, process_response: Callable[[dict], Any]) -> Any:
         results = await asyncio.gather(self._make_request(url, payload, process_response), self._make_request(url, payload, process_response))
         successful_result = next((result for result in results if result is not None), None)
@@ -45,8 +55,13 @@ class ModalService:
         Raises:
             HTTPException: If all requests fail or return unexpected status codes.
         """
-        url = "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run"
-        
+        if self.environment == "production-azure":
+            if count > len(self.production_urls):
+                raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(self.production_urls)}")
+            url_list = random.sample(self.production_urls, count)
+        else:
+            url_list = ["https://earlywormteam--product-shoot-comfyui-first-gen.modal.run"] * count
+
         async def single_image_request():
             seed = random.randint(0, 2**32 - 1)
             payload = {
@@ -66,7 +81,7 @@ class ModalService:
                     return [base64.b64decode(json_response['images'][0])]
                 return None
 
-            return await self._make_request(url, payload, process_response)
+            return await self._make_request(url_list[0], payload, process_response)
 
         # Generate 'count' number of images using individual requests
         image_data_list = await asyncio.gather(*[single_image_request() for _ in range(count)])
@@ -132,7 +147,12 @@ class ModalService:
         Raises:
             HTTPException: If all requests fail or return unexpected status codes.
         """
-        url = "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run"
+        if self.environment == "production-azure":
+            if count > len(self.production_urls):
+                raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(self.production_urls)}")
+            url_list = random.sample(self.production_urls, count)
+        else:
+            url_list = ["https://earlywormteam--product-shoot-comfyui-first-gen.modal.run"] * count
         
         async def single_image_request(index: int):
             seed = random.randint(0, 2**32 - 1)
@@ -151,7 +171,7 @@ class ModalService:
 
             async with httpx.AsyncClient(follow_redirects=True) as client:
                 try:
-                    response = await client.post(url, json=payload, timeout=400.0)
+                    response = await client.post(url_list[index], json=payload, timeout=400.0)
                     if response.status_code == 200:
                         json_response = response.json()
                         if 'images' in json_response and json_response['images']:
