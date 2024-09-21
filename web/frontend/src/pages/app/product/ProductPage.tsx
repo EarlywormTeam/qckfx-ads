@@ -33,6 +33,8 @@ const ProductPage: React.FC = () => {
   const [imagePosition, setImagePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const imageRef = useRef<HTMLImageElement>(null);
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
+  const [refiningGroupIds, setRefiningGroupIds] = useState<string[]>([]);
+  const [refiningErrorGroupIds, setRefiningErrorGroupIds] = useState<string[]>([]);
 
   const handleGenerateImages = useCallback(async () => {
     if (prompt.trim() === '') {
@@ -58,16 +60,13 @@ const ProductPage: React.FC = () => {
 
     try {
       const generationJobId = await generateImageAPI.generateProductImage(product!.id, prompt, 4);
-      console.log(generationJobId, "generationJobId")
       const generator = generateImageAPI.pollGenerationJob(generationJobId);
-      console.log(generator, "generator")
 
       for await (const result of generator) {
         if (result.imageGroups) {
           setGeneratedImageGroups(prevGroups => {
             const newGroups = [...prevGroups];
             result.imageGroups!.forEach(group => {
-              console.log(group, "group")
               const existingIndex = newGroups.findIndex(g => g.id === group.id);
               if (existingIndex !== -1) {
                 newGroups[existingIndex] = group as ImageGroup;
@@ -120,7 +119,8 @@ const ProductPage: React.FC = () => {
 
   const handleRefine = useCallback(async (group: ImageGroup) => {
     const currentImage = group.images[currentVersion];
-    setIsGenerating(true);
+    setRefiningGroupIds([...refiningGroupIds, group.id]);
+    setRefiningErrorGroupIds(prevIds => prevIds.filter(id => id !== group.id));
 
     try {
       const result = await generateImageAPI.refineImage(
@@ -156,8 +156,9 @@ const ProductPage: React.FC = () => {
         description: "Failed to refine image. Please try again.",
         variant: "destructive",
       });
+      setRefiningErrorGroupIds([...refiningErrorGroupIds, group.id]);
     } finally {
-      setIsGenerating(false);
+      setRefiningGroupIds(prevIds => prevIds.filter(id => id !== group.id));
     }
   }, [generateImageAPI, toast, fullscreenGroup, currentVersion, prompt]);
 
@@ -430,6 +431,17 @@ const ProductPage: React.FC = () => {
                             className="w-full h-full object-contain rounded-lg shadow-md"
                           />
 
+                          {refiningGroupIds.includes(group.id) && (
+                            <div className="absolute top-2 right-2">
+                              <Loader2 className="w-6 h-6 text-white animate-spin" />
+                            </div>
+                          )}
+                          {refiningErrorGroupIds.includes(group.id) && (
+                            <div className="absolute top-2 right-2">
+                              <XCircle className="w-6 h-6 text-red-500" />
+                            </div>
+                          )}
+
                           <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
                             <Button variant="ghost" size="sm" onClick={() => handleDelete(group.id)} className="mr-2 hover:bg-gray-400">
                               <Trash2 size={20} className="text-white hover:text-black" />
@@ -575,6 +587,16 @@ const ProductPage: React.FC = () => {
                     draggable="false"
                   />
                 ))}
+                {refiningGroupIds.includes(fullscreenGroup.id) && (
+                  <div className="absolute top-4 right-20">
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  </div>
+                )}
+                {refiningErrorGroupIds.includes(fullscreenGroup.id) && (
+                  <div className="absolute top-2 right-2">
+                    <XCircle className="w-6 h-6 text-red-500" />
+                  </div>
+                )}
               </div>
               <Button 
                 onClick={() => handleFullScreenNavigation('next')} 
@@ -632,10 +654,10 @@ const ProductPage: React.FC = () => {
                   variant="outline" 
                   onClick={() => handleRefine(fullscreenGroup)}
                   className="text-text-white border-text-white bg-background-dark/50 hover:bg-background-dark/70"
-                  disabled={isGenerating}
+                  disabled={refiningGroupIds.includes(fullscreenGroup.id)}
                 >
-                  {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw size={20} className="mr-2" />}
-                  {isGenerating ? 'Refining...' : 'Refine'}
+                  {refiningGroupIds.includes(fullscreenGroup.id) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw size={20} className="mr-2" />}
+                  {refiningGroupIds.includes(fullscreenGroup.id) ? 'Refining...' : 'Refine'}
                 </Button>
                 <Button 
                   className="bg-background-action text-text-black hover:bg-background-action/80"
