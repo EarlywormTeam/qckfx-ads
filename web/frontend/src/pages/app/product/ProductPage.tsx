@@ -1,14 +1,15 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Slider } from "@/components/ui/slider";
 import { useLocation } from 'react-router-dom';
 import { Product } from '@/types/product';
 import { useGenerateAPI } from '@/api/generate';
-import { Trash2, RefreshCw, Maximize2, ChevronLeft, ChevronRight, Lightbulb, Infinity, Target, X, Loader2, ZoomIn, ZoomOut, Download, XCircle } from 'lucide-react';
-import { ImageGroup, GeneratedImage } from '@/types/generatedImage';
+import { GeneratedImage, ImageGroup } from '@/types/generatedImage';
 import { useProductAPI } from '@/api/product';
+
+import ProductDetails from './components/ProductDetails';
+import GeneratedImages from './components/GeneratedImages';
+import RecentImages from './components/RecentImages';
+import FullScreenView from './components/FullScreenView';
 import { saveAs } from 'file-saver';
 
 const ProductPage: React.FC = () => {
@@ -31,7 +32,7 @@ const ProductPage: React.FC = () => {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [imagePosition, setImagePosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const imageRef = useRef<HTMLImageElement>(null);
+  // const imageRef = useRef<HTMLImageElement>(null);
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
   const [refiningGroupIds, setRefiningGroupIds] = useState<string[]>([]);
   const [refiningErrorGroupIds, setRefiningErrorGroupIds] = useState<string[]>([]);
@@ -68,7 +69,6 @@ const ProductPage: React.FC = () => {
           setGeneratedImageGroups(prevGroups => {
             const newGroups = [...prevGroups];
             result.imageGroups!.forEach(group => {
-              // console.log(group, 'group');
               const existingIndex = newGroups.findIndex(g => g.id === group.id);
               if (existingIndex !== -1) {
                 newGroups[existingIndex] = group as ImageGroup;
@@ -222,11 +222,11 @@ const ProductPage: React.FC = () => {
     setDragStart(null);
   };
 
-  const handleFullScreenClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      handleCloseFullScreen();
-    }
-  }, []);
+  // const handleFullScreenClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  //   if (e.target === e.currentTarget) {
+  //     handleCloseFullScreen();
+  //   }
+  // }, []);
 
   const handleFullScreenNavigation = (direction: 'prev' | 'next') => {
     const newIndex = direction === 'prev' 
@@ -311,49 +311,6 @@ const ProductPage: React.FC = () => {
     }
   }, [generatedImageGroups]);
 
-  // useEffect(() => {
-  //   if (product) {
-  //     setLoading(true);
-  //     productAPI.getProductImageGroups(product.id)
-  //       .then((groups: ImageGroup[]) => {
-  //         setRecentImageGroups(groups);
-  //         setLoading(false);
-  //       })
-  //       .catch((error: Error) => {
-  //         console.error('Error fetching image groups:', error);
-  //         toast({
-  //           title: "Error",
-  //           description: "Failed to fetch image groups. Please try again.",
-  //           variant: "destructive",
-  //         });
-  //         setLoading(false);
-  //       });
-  //   }
-  // }, [product, productAPI, toast]);
-
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (!product) return <div className="p-8">Product not found</div>;
-
-  const samplePrompts = [
-    "A woman on the beach holding a can of Calm Crunchy sparkling water.",
-    "A can of Calm Crunchy sparkling water at a picnic.",
-    "A can of Calm Crunchy sparkling water on a table with a plant.",
-    "A can of Calm Crunchy sparkling water on an iceberg floating in the ocean."
-  ];
-
-  const getMostRecentImage = (group: ImageGroup): GeneratedImage | undefined => {
-    return group.images
-      .filter(image => image.url && image.status === "generated")
-      .reduce<GeneratedImage | undefined>((latest, current) => 
-        !latest || new Date(current.createdAt) > new Date(latest.createdAt) ? current : latest
-      , undefined);
-  };
-
-  const getDefaultImage = (group: ImageGroup): GeneratedImage | undefined => {
-    return group.images
-    .filter(image => image.url && image.status === "generated" && image.id === group.defaultImageId)[0];
-  }
-
   useEffect(() => {
     if (!fullscreenGroup) {
       return;
@@ -377,324 +334,67 @@ const ProductPage: React.FC = () => {
     };
   }, [fullscreenGroup, handleFullScreenNavigation, generatedImageGroups]);
 
+  if (loading) return <div className="p-8">Loading...</div>;
+  if (!product) return <div className="p-8">Product not found</div>;
+
+  const getDefaultImage = (group: ImageGroup): GeneratedImage | undefined => {
+    return group.images
+    .filter(image => image.url && image.status === "generated" && image.id === group.defaultImageId)[0];
+  }
+
   return (
     <div className="p-4 max-w-6xl mx-auto">
       <div className="flex items-start mb-4">
-        {/* Left Column: Product Image and Details */}
-        <div className="w-1/3 pr-4">
-          <div className="relative mb-2" style={{ paddingBottom: '100%' }}>
-            <img 
-              src={product.primaryImageUrl} 
-              alt={product.name} 
-              className="absolute inset-0 w-full h-full object-contain rounded-lg shadow-lg"
-            />
-          </div>
-          <h2 className="text-xl font-semibold">{product.name}</h2>
-          <Textarea
-            placeholder="Enter your prompt (multiple lines supported)"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            className="w-full p-2 border rounded my-4 flex-grow"
-            rows={4}
-          />
-          <Button 
-            onClick={handleGenerateImages}
-            className="w-full mb-12"
-            disabled={isGenerating}
-          >
-            {isGenerating ? 'Generating...' : 'Generate Images'}
-          </Button>
-        </div>
+        <ProductDetails
+          product={product!}
+          prompt={prompt}
+          setPrompt={setPrompt}
+          handleGenerateImages={handleGenerateImages}
+          isGenerating={isGenerating}
+        />
         
-        {/* Right Column: Generated Images or Version History */}
-        <div className="w-2/3">
-          <div>
-            {generatedImageGroups.length > 0 ? (
-              <div className="relative">
-                <div 
-                  ref={gridRef}
-                  className="grid gap-4 mb-4 overflow-hidden"
-                  style={{ 
-                    gridTemplateRows: 'repeat(2, 1fr)',
-                    gridAutoFlow: 'column',
-                    gridAutoColumns: 'min-content',
-                    maxWidth: 'calc(600px + 1rem)', // 2 * 300px (max image width) + 1rem (gap)
-                    maxHeight: 'calc(600px + 1rem)', // 2 * 300px (max image height) + 1rem (gap)
-                    margin: '0 auto', // Center the grid
-                    scrollSnapType: 'x mandatory'
-                  }}
-                >
-                  {generatedImageGroups.map((group, index) => (
-                    <div 
-                      key={index} 
-                      className="aspect-square w-[300px] h-[300px] scroll-snap-align-start"
-                    >
-                      {group.images.length === 0 ? (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-                        </div>
-                      ) : group.images[0].status === 'pending' ? (
-                        <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 rounded-lg flex items-center justify-center">
-                          <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-                        </div>
-                      ) : group.images[0].status === 'generated' ? (
-                        <div className="relative group w-full h-full">
-                          <img 
-                            src={group.defaultImageId ? getDefaultImage(group)?.url ?? '' : getMostRecentImage(group)?.url ?? ''} 
-                            alt={`Generated ${index + 1}`} 
-                            className="w-full h-full object-contain rounded-lg shadow-md"
-                          />
-
-                          {refiningGroupIds.includes(group.id) && (
-                            <div className="absolute top-2 right-2">
-                              <Loader2 className="w-6 h-6 text-white animate-spin" />
-                            </div>
-                          )}
-                          {refiningErrorGroupIds.includes(group.id) && (
-                            <div className="absolute top-2 right-2">
-                              <XCircle className="w-6 h-6 text-red-500" />
-                            </div>
-                          )}
-
-                          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                            <Button variant="ghost" size="sm" onClick={() => handleDelete(group.id)} className="mr-2 hover:bg-gray-400">
-                              <Trash2 size={20} className="text-white hover:text-black" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleRefine(group)} className="mr-2 hover:bg-gray-400">
-                              <RefreshCw size={20} className="text-white hover:text-black" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleFullScreenVersions(group, index)} className="mr-2 hover:bg-gray-400">
-                              <Maximize2 size={20} className="text-white hover:text-black" />
-                            </Button>
-                            <Button variant="ghost" size="sm" onClick={() => handleDownload(group.defaultImageId ? getDefaultImage(group)?.id ?? '' : getMostRecentImage(group)?.id ?? '', `image_${group.id}.jpg`)} className="mr-2 hover:bg-gray-400">
-                              <Download size={20} className="text-white hover:text-black" />
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="relative w-full h-full bg-red-100 rounded-lg flex flex-col items-center justify-center">
-                          <XCircle className="w-8 h-8 text-red-500 mb-2" />
-                          <span className="text-red-500 mb-2">Generation failed</span>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(group.id)} className="mt-2">
-                            <Trash2 size={20} className="text-red-500" />
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 flex justify-between items-center relative">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange('prev')}
-                    disabled={currentPage === 0}
-                  >
-                    <ChevronLeft size={20} />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePageChange('next')}
-                    disabled={(currentPage + 1) * imagesPerPage >= generatedImageGroups.length}
-                  >
-                    <ChevronRight size={20} />
-                  </Button>
-
-                  {showPaginationTutorial && (
-                    <div className="absolute right-0 top-full mt-2 bg-white p-3 rounded-lg shadow-lg z-10 w-64">
-                      <div className="absolute -top-2 right-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white"></div>
-                      <p className="text-sm mb-2">
-                        Click this arrow to see more generated images.
-                      </p>
-                      <Button size="sm" onClick={handleDismissTutorial} className="w-full">
-                        Got it!
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : isGenerating ? (
-              <div className="flex flex-col items-center justify-center h-full">
-                <RefreshCw className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-                <p className="text-lg font-semibold">Generating your images...</p>
-                <p className="text-sm text-gray-600 mt-2">This may take a few moments</p>
-              </div>
-            ) : (
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Sample Prompts to Get Started</h3>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  {samplePrompts.map((prompt, index) => (
-                    <div key={index} className="bg-gray-100 p-4 rounded-lg">
-                      <Lightbulb className="w-6 h-6 text-blue-500 mb-2" />
-                      <p className="text-sm text-gray-700">{prompt}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <h4 className="text-md font-semibold mb-2">Benefits of Generating Images with qckfx</h4>
-                  <ul className="space-y-2">
-                    <li className="flex items-center">
-                      <RefreshCw className="w-5 h-5 text-blue-500 mr-2" />
-                      <span className="text-sm">Refine your images to perfection</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Target className="w-5 h-5 text-blue-500 mr-2" />
-                      <span className="text-sm">State-of-the-art precision on labels and logos</span>
-                    </li>
-                    <li className="flex items-center">
-                      <Infinity className="w-5 h-5 text-blue-500 mr-2" />
-                      <span className="text-sm">Unlimited image generations and refinements</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <GeneratedImages
+          generatedImageGroups={generatedImageGroups}
+          gridRef={gridRef}
+          handleDelete={handleDelete}
+          handleRefine={handleRefine}
+          handleFullScreenVersions={handleFullScreenVersions}
+          handleDownload={handleDownload}
+          refiningGroupIds={refiningGroupIds}
+          refiningErrorGroupIds={refiningErrorGroupIds}
+          currentPage={currentPage}
+          imagesPerPage={imagesPerPage}
+          handlePageChange={handlePageChange}
+          showPaginationTutorial={showPaginationTutorial}
+          handleDismissTutorial={handleDismissTutorial}
+          isGenerating={isGenerating}
+        />
       </div>
       
-      {/* Recent Images */}
-      <h3 className="text-lg font-semibold mb-2">Recent Images</h3>
-      <div className="flex space-x-2 overflow-x-auto pb-4">
-        {recentImageGroups.slice(0, 5).map((group) => {
-          const mostRecentImage = getMostRecentImage(group);
-          return (
-            <img 
-              key={group.id} 
-              src={mostRecentImage?.url ?? ''} 
-              alt={`Recent ${group.id}`} 
-              className="w-24 h-24 object-cover rounded-lg shadow-md cursor-pointer"
-              onClick={() => handleFullScreenVersions(group, recentImageGroups.indexOf(group))}
-            />
-          );
-        })}
-      </div>
+      <RecentImages
+        recentImageGroups={recentImageGroups}
+        handleFullScreenVersions={handleFullScreenVersions}
+      />
 
-      {/* Full-screen version history */}
       {fullscreenGroup && (
-        <div 
-          className="fixed inset-0 bg-background-black bg-opacity-90 z-50 flex items-center justify-center"
-          onClick={handleFullScreenClick}
-        >
-          <div className="max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
-            <Button 
-              variant="ghost" 
-              onClick={handleCloseFullScreen} 
-              className="absolute top-4 right-4 text-text-white hover:bg-background-dark/20"
-            >
-              <X size={24} />
-            </Button>
-            <div className="flex items-center justify-center mb-4">
-              <Button 
-                onClick={() => handleFullScreenNavigation('prev')} 
-                disabled={currentGroupIndex === 0}
-                className="text-text-black bg-background-white hover:bg-background-accent/20"
-              >
-                <ChevronLeft size={20} />
-              </Button>
-              <div className="relative w-[80vw] h-[80vh] mx-4 overflow-hidden">
-                {fullscreenGroup.images.map((image, index) => (
-                  <img
-                    key={index}
-                    ref={index === currentVersion ? imageRef : null}
-                    src={image.url ?? ''}
-                    alt={`Version ${index + 1}`}
-                    className={`absolute top-0 left-0 w-full h-full object-contain transition-opacity duration-300 ${
-                      index === currentVersion ? 'opacity-100' : 'opacity-0'
-                    }`}
-                    style={{
-                      transform: `scale(${zoomLevel}) translate(${imagePosition.x}px, ${imagePosition.y}px)`,
-                      transformOrigin: 'center',
-                      transition: 'transform 0.3s ease-out',
-                      cursor: zoomLevel > 1 ? 'move' : 'default',
-                    }}
-                    onMouseDown={handleMouseDown}
-                    draggable="false"
-                  />
-                ))}
-                {refiningGroupIds.includes(fullscreenGroup.id) && (
-                  <div className="absolute top-4 right-20">
-                    <Loader2 className="w-6 h-6 text-white animate-spin" />
-                  </div>
-                )}
-                {refiningErrorGroupIds.includes(fullscreenGroup.id) && (
-                  <div className="absolute top-2 right-2">
-                    <XCircle className="w-6 h-6 text-red-500" />
-                  </div>
-                )}
-              </div>
-              <Button 
-                onClick={() => handleFullScreenNavigation('next')} 
-                disabled={currentGroupIndex === generatedImageGroups.length - 1}
-                className="text-text-black bg-background-white hover:bg-background-accent/20"
-              >
-                <ChevronRight size={20} />
-              </Button>
-            </div>
-            <div className="flex flex-col space-y-4 text-text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <span className="mr-2">Version: {currentVersion + 1}</span>
-                  <Slider
-                    value={[currentVersion]}
-                    max={fullscreenGroup.images.length - 1}
-                    step={1}
-                    className="w-48"
-                    onValueChange={handleVersionChange}
-                  />
-                  <span className="ml-2">of {fullscreenGroup.images.length}</span>
-                </div>
-                <div className="flex items-center">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleZoom('out')}
-                    disabled={zoomLevel === 1}
-                    className="mr-2 text-text-white border-text-white bg-background-dark/50 hover:bg-background-dark/70"
-                  >
-                    <ZoomOut size={20} />
-                  </Button>
-                  <span className="mx-2">{Math.round(zoomLevel * 100)}%</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleZoom('in')}
-                    disabled={zoomLevel === 3}
-                    className="ml-2 text-text-white border-text-white bg-background-dark/50 hover:bg-background-dark/70"
-                  >
-                    <ZoomIn size={20} />
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="flex justify-between">
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleDownload(fullscreenGroup.images[currentVersion].id, `image_${fullscreenGroup.id}_v${currentVersion + 1}.jpg`)}
-                  className="text-text-white border-text-white bg-background-dark/50 hover:bg-background-dark/70"
-                >
-                  <Download size={20} className="mr-2" /> Download This Version
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => handleRefine(fullscreenGroup)}
-                  className="text-text-white border-text-white bg-background-dark/50 hover:bg-background-dark/70"
-                  disabled={refiningGroupIds.includes(fullscreenGroup.id)}
-                >
-                  {refiningGroupIds.includes(fullscreenGroup.id) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw size={20} className="mr-2" />}
-                  {refiningGroupIds.includes(fullscreenGroup.id) ? 'Refining...' : 'Refine'}
-                </Button>
-                <Button 
-                  className="bg-background-action text-text-black hover:bg-background-action/80"
-                  onClick={handleSetDefaultImage}
-                >
-                  Use This Version
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <FullScreenView
+          fullscreenGroup={fullscreenGroup}
+          currentVersion={currentVersion}
+          currentGroupIndex={currentGroupIndex}
+          totalGroups={generatedImageGroups.length}
+          zoomLevel={zoomLevel}
+          imagePosition={imagePosition}
+          handleCloseFullScreen={handleCloseFullScreen}
+          handleFullScreenNavigation={handleFullScreenNavigation}
+          handleVersionChange={handleVersionChange}
+          handleZoom={handleZoom}
+          handleMouseDown={handleMouseDown}
+          handleDownload={handleDownload}
+          handleRefine={handleRefine}
+          handleSetDefaultImage={handleSetDefaultImage}
+          refiningGroupIds={refiningGroupIds}
+          refiningErrorGroupIds={refiningErrorGroupIds}
+        />
       )}
     </div>
   );
