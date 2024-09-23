@@ -3,14 +3,16 @@ from typing import Optional
 from dotenv import load_dotenv
 import replicate
 import fal_client
-from .modal import ModalService  # Import ModalService
+
+from toolbox.services.flags import FeatureFlags
+from toolbox.services.comfy import ComfyService
 
 class ImageService:
-    def __init__(self):
+    def __init__(self, flags: FeatureFlags):
         load_dotenv()
         self.replicate_client = replicate.Client(api_token=os.getenv("REPLICATE_API_TOKEN"))
         self.fal_key = os.getenv("FAL_KEY")
-        self.modal_service = ModalService()  # Create an instance of ModalService
+        self.comfy_service = ComfyService(flags) 
 
     async def remove_background(self, image_url):
         try:
@@ -70,7 +72,7 @@ class ImageService:
 
     async def generate_images(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str) -> list:
         """
-        Generate images using the Modal service.
+        Generate images using the Comfy service.
 
         Args:
             prompt (str): The prompt for image generation.
@@ -85,7 +87,7 @@ class ImageService:
             Exception: If there's an error during image generation.
         """
         try:
-            result = await self.modal_service.generate_images(prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt)
+            result = await self.comfy_service.generate_images(prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt)
             return result
         except Exception as e:
             raise Exception(f"Error in image generation: {str(e)}")
@@ -107,7 +109,7 @@ class ImageService:
             Exception: If there's an error during image refinement.
         """
         try:
-            result = await self.modal_service.refine_image(image_data, original_prompt, product_description, gen_id)
+            result = await self.comfy_service.refine_image(image_data, original_prompt, product_description, gen_id)
             return result
         except Exception as e:
             raise Exception(f"Error in image refinement: {str(e)}")
@@ -133,7 +135,7 @@ class ImageService:
             Exception: If there's an error during image generation.
         """
         try:
-            async for index, image_data in self.modal_service.generate_images_stream(
+            async for index, image_data in self.comfy_service.generate_images_stream(
                 prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt, image_name
             ):
                 yield index, image_data

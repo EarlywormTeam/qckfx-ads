@@ -4,12 +4,14 @@ import toolbox.services.blob_storage as blob_storage
 import toolbox.services.image as image
 import toolbox.services.logger as logger
 import toolbox.services.llm as llm
+import toolbox.services.flags as flags
 
 class Services:
     _blob_storage: blob_storage.BlobStorageService | None = None
     _logger: logger.Logger | None = None
     _llm: llm.LLMService | None = None
     _image_service: image.ImageService | None = None
+    _flags: flags.FeatureFlags | None = None
 
     def __init__(self):
         load_dotenv()  # Load environment variables from .env file
@@ -37,6 +39,15 @@ class Services:
     @property
     def image_service(self) -> image.ImageService:
         if self._image_service is None:
-            self._image_service = image.ImageService()
+            self._image_service = image.ImageService(flags=self.flags)
         return self._image_service
+
+    @property
+    def flags(self) -> flags.FeatureFlags:
+        if self._flags is None:
+            sdk_key = os.getenv('LAUNCHDARKLY_SDK_KEY')
+            if not sdk_key:
+                raise ValueError("LAUNCHDARKLY_SDK_KEY environment variable is not set")
+            self._flags = flags.FeatureFlags(sdk_key)
+        return self._flags
 

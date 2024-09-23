@@ -3,18 +3,22 @@ from fastapi import HTTPException
 import base64
 import random
 import asyncio
-import os
+import json
 from typing import Callable, Any, AsyncGenerator, Optional
 
-class ModalService:
-    def __init__(self):
-        self.environment = os.getenv("ENV", "development")
-        self.production_urls = [
-            "http://comfy1:8000/first_gen",
-            "http://comfy2:8000/first_gen",
-            "http://comfy3:8000/first_gen",
-            "http://comfy4:8000/first_gen"
-        ]
+from toolbox.services.flags import FeatureFlags
+
+class ComfyService:
+    def __init__(self, flags: FeatureFlags):
+        self.flags = flags
+        self.default_urls = json.loads('{ \
+            "urls": [ \
+                "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run", \
+                "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run", \
+                "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run", \
+                "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run" \
+            ] \
+        }')
 
     async def _make_dual_requests(self, url: str, payload: dict, process_response: Callable[[dict], Any]) -> Any:
         results = await asyncio.gather(self._make_request(url, payload, process_response), self._make_request(url, payload, process_response))
@@ -55,12 +59,10 @@ class ModalService:
         Raises:
             HTTPException: If all requests fail or return unexpected status codes.
         """
-        if self.environment == "production-azure":
-            if count > len(self.production_urls):
-                raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(self.production_urls)}")
-            url_list = random.sample(self.production_urls, count)
-        else:
-            url_list = ["https://earlywormteam--product-shoot-comfyui-first-gen.modal.run"] * count
+        urls = self.flags.get_flag("gpu_urls", self.default_urls)["urls"]
+        if count > len(urls):
+            raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(urls)}")
+        url_list = random.sample(urls, count)
 
         async def single_image_request():
             seed = random.randint(0, 2**32 - 1)
@@ -110,7 +112,8 @@ class ModalService:
         Raises:
             HTTPException: If the request fails or returns an unexpected status code.
         """
-        url = "https://earlywormteam--product-shoot-comfyui-refine-object.modal.run"
+        urls = self.flags.get_flag("gpu_urls", self.default_urls)["urls"]
+        url = random.sample(urls, 1)[0]
         seed = random.randint(0, 2**32 - 1)
         payload = {
             "prompt": product_description,  # Use the product description as the main prompt
@@ -147,12 +150,10 @@ class ModalService:
         Raises:
             HTTPException: If all requests fail or return unexpected status codes.
         """
-        if self.environment == "production-azure":
-            if count > len(self.production_urls):
-                raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(self.production_urls)}")
-            url_list = random.sample(self.production_urls, count)
-        else:
-            url_list = ["https://earlywormteam--product-shoot-comfyui-first-gen.modal.run"] * count
+        urls = self.flags.get_flag("gpu_urls", self.default_urls)["urls"]
+        if count > len(urls):
+            raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(urls)}")
+        url_list = random.sample(urls, count)
         
         async def single_image_request(index: int):
             seed = random.randint(0, 2**32 - 1)
