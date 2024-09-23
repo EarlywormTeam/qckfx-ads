@@ -35,6 +35,7 @@ const ProductPage: React.FC = () => {
   const [currentGroupIndex, setCurrentGroupIndex] = useState(0);
   const [refiningGroupIds, setRefiningGroupIds] = useState<string[]>([]);
   const [refiningErrorGroupIds, setRefiningErrorGroupIds] = useState<string[]>([]);
+  const [showPaginationTutorial, setShowPaginationTutorial] = useState(false);
 
   const handleGenerateImages = useCallback(async () => {
     if (prompt.trim() === '') {
@@ -283,6 +284,11 @@ const ProductPage: React.FC = () => {
     }
   }, [fullscreenGroup, currentVersion, productAPI, toast]);
 
+  const handleDismissTutorial = () => {
+    setShowPaginationTutorial(false);
+    localStorage.setItem('hasSeenPaginationTutorial', 'true');
+  };
+
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
@@ -297,6 +303,13 @@ const ProductPage: React.FC = () => {
       setImagePosition({ x: 0, y: 0 });
     }
   }, [zoomLevel]);
+
+  useEffect(() => {
+    const hasSeenTutorial = localStorage.getItem('hasSeenPaginationTutorial');
+    if (!hasSeenTutorial && generatedImageGroups.length > 4) {
+      setShowPaginationTutorial(true);
+    }
+  }, [generatedImageGroups]);
 
   // useEffect(() => {
   //   if (product) {
@@ -470,7 +483,7 @@ const ProductPage: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 flex justify-between">
+                <div className="mt-4 flex justify-between items-center relative">
                   <Button
                     variant="outline"
                     size="sm"
@@ -487,6 +500,18 @@ const ProductPage: React.FC = () => {
                   >
                     <ChevronRight size={20} />
                   </Button>
+
+                  {showPaginationTutorial && (
+                    <div className="absolute right-0 top-full mt-2 bg-white p-3 rounded-lg shadow-lg z-10 w-64">
+                      <div className="absolute -top-2 right-4 w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-white"></div>
+                      <p className="text-sm mb-2">
+                        Click this arrow to see more generated images.
+                      </p>
+                      <Button size="sm" onClick={handleDismissTutorial} className="w-full">
+                        Got it!
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : isGenerating ? (
