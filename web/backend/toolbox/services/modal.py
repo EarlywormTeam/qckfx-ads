@@ -10,10 +10,10 @@ class ModalService:
     def __init__(self):
         self.environment = os.getenv("ENV", "development")
         self.production_urls = [
-            "http://localhost:8001",
-            "http://localhost:8002",
-            "http://localhost:8003",
-            "http://localhost:8004"
+            "http://comfy1:8000/first_gen",
+            "http://comfy2:8000/first_gen",
+            "http://comfy3:8000/first_gen",
+            "http://comfy4:8000/first_gen"
         ]
 
     async def _make_dual_requests(self, url: str, payload: dict, process_response: Callable[[dict], Any]) -> Any:

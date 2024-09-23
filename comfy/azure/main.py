@@ -3,6 +3,10 @@ import json
 import os
 import shutil
 import subprocess
+import time
+import socket
+import sys
+import re
 from pathlib import Path
 from typing import Dict, List
 
@@ -54,13 +58,48 @@ class RefineObjectRequest(BaseModel):
 
 # Helper Functions
 def run_comfy_command(cmd: str, cwd: Path = COMFYUI_DIR) -> None:
-    """Run a ComfyUI command."""
-    process = subprocess.run(cmd, shell=True, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    if process.returncode != 0:
-        print(f"Command failed: {cmd}")
-        print(process.stdout.decode())
-        print(process.stderr.decode())
-        raise RuntimeError(f"Command failed: {cmd}")
+    """Run a ComfyUI command and stream output in real-time."""
+    process = subprocess.Popen(
+        cmd,
+        shell=True,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,  # Ensures the output is decoded to string
+        bufsize=1,  # Line-buffered
+        universal_newlines=True
+    )
+
+    # Stream stdout
+    while True:
+        stdout_line = process.stdout.readline()
+        if stdout_line:
+            print(stdout_line, end='')  # Print stdout lines as they come
+        else:
+            break
+
+    # Stream stderr
+    while True:
+        stderr_line = process.stderr.readline()
+        if stderr_line:
+            print(stderr_line, end='', file=sys.stderr)  # Print stderr lines as they come
+        else:
+            break
+
+    process.stdout.close()
+    process.stderr.close()
+    return_code = process.wait()
+
+    if return_code != 0:
+        raise RuntimeError(f"Command failed with return code {return_code}")
+
+def is_port_open(port, host='localhost'):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.connect((host, port))
+            return True
+        except socket.error:
+            return False
 
 def find_output_images(file_prefix: str) -> List[bytes]:
     """Find and return image bytes from the output directory based on the file prefix."""
@@ -72,16 +111,42 @@ def find_output_images(file_prefix: str) -> List[bytes]:
 
 def launch_comfyui():
     """Launch ComfyUI as a subprocess."""
-    cmd = f"comfy launch -- --listen 0.0.0.0 --port 8000"
-    subprocess.Popen(cmd, shell=True, cwd=COMFYUI_DIR)
-    print(f"ComfyUI launched.")
+    cmd = f"comfy --skip-prompt --workspace={COMFYUI_DIR} launch --background -- --highvram --cuda-device=0"
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, shell=True, cwd=COMFYUI_DIR)
+  
+    check_interval = 1
+    port = 8188
+    timeout = 300 # 5 mins
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        # Check if the process is still running
+        if process.poll() is not None:
+            raise Exception("ComfyUI process terminated unexpectedly")
+
+        # Check for specific log message
+        line = process.stdout.readline()
+        if "To see the GUI go to" in line:
+            print("ComfyUI startup message detected")
+            break
+
+        # Check if the port is open
+        if is_port_open(port):
+            print(f"Port {port} is open")
+            break
+
+        time.sleep(check_interval)
+    else:
+        process.terminate()
+        raise TimeoutError("ComfyUI startup timed out")
+
+    print("ComfyUI is up and running")
 
 # Event Handlers
 @app.on_event("startup")
 def startup_event():
     """Launch ComfyUI when the FastAPI app starts."""
     try:
-        subprocess.run("curl --silent http://localhost:8000", shell=True, check=True)
+        subprocess.run("curl --silent http://localhost:8080", shell=True, check=True)
         print("ComfyUI is already running.")
     except subprocess.CalledProcessError:
         launch_comfyui()
@@ -89,6 +154,7 @@ def startup_event():
 # API Endpoints
 @app.post("/first_gen")
 def first_gen(request: FirstGenRequest):
+    print(f"first_gen {request.gen_id}")
     try:
         # Load the workflow template
         workflow_path = WORKFLOWS_DIR / "first_gen_workflow_api.json"
@@ -96,28 +162,30 @@ def first_gen(request: FirstGenRequest):
 
         # Modify the workflow based on the request
         workflow_data["295"]["inputs"]["text"] = f"{request.trigger_word} {request.prompt}"
-        workflow_data["185"]["inputs"]["text"] = f"{request.prompt}\nSharp, focused details, correct hands, fingers, and finger nails."
-        workflow_data["231"]["inputs"]["text"] = f"{request.prompt}\nCrisp text, correct fingers and finger nails, in focus, sharp. Remove artifacts. Non-frizzy hair."
-
+        workflow_data["483"]["inputs"]["text"] = f"{request.trigger_word} {request.prompt}"
+ 
         # Set the number of images to generate
         workflow_data["304"]["inputs"]["batch_size"] = request.count
 
         # Set the filename prefix
-        workflow_data["164"]["inputs"]["filename_prefix"] = f"{request.gen_id}_{request.seed}_first_gen"
+        workflow_data["164"]["inputs"]["filename_prefix"] = f"{request.gen_id}_{request.seed}_first_gen_1"
+        # workflow_data["698"]["inputs"]["filename_prefix"] = f"{request.gen_id}_{request.seed}_first_gen_2"
 
         # Set the lora
         workflow_data["125"]["inputs"]["lora_name"] = request.lora_name
+        workflow_data["329"]["inputs"]["lora_name"] = request.lora_name
+        workflow_data["574"]["inputs"]["lora_name"] = request.lora_name
 
         # Set the product description
-        workflow_data["6"]["inputs"]["text"] = request.product_description
+        workflow_data["511"]["inputs"]["Text"] = request.product_description
 
         # Set the detection prompt
-        detection_nodes = ["120", "128", "225", "243", "266", "283"]
+        detection_nodes = ["120", "128", "168", "266", "283", "425", "468", "556", "563", "596", "651", "666", ]
         for node_id in detection_nodes:
             workflow_data[node_id]["inputs"]["prompt"] = request.detection_prompt
 
         # Set the seed
-        seed_nodes = ["25", "192", "208", "211", "212", "236", "303"]
+        seed_nodes = ["25", "192", "212", "236", "303", "661"]
         for node_id in seed_nodes:
             workflow_data[node_id]["inputs"]["noise_seed"] = request.seed
 
@@ -127,7 +195,9 @@ def first_gen(request: FirstGenRequest):
             json.dump(workflow_data, f)
 
         # Run the workflow
+        print(f"starting comfy run {request.gen_id}")
         run_comfy_command(f"comfy run --workflow {new_workflow_file} --wait --verbose --timeout 1200")
+        print(f"finished comfy run {request.gen_id}")
 
         # Retrieve output images
         image_bytes_list = find_output_images(f"{request.gen_id}_{request.seed}_first_gen")
@@ -143,6 +213,11 @@ def first_gen(request: FirstGenRequest):
     except Exception as e:
         print(f"Error in first_gen: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/ping")
+def ping():
+    run_comfy_command("comfy env")
+    return JSONResponse(content={"status": "ok"})
 
 @app.post("/refine_first_gen")
 def refine_first_gen(request: RefineFirstGenRequest):

@@ -6,6 +6,7 @@ ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -13,17 +14,24 @@ WORKDIR /app
 RUN mkdir -p /app/ComfyUI
 VOLUME /app/ComfyUI
 
-# Copy the necessary files from the base stage
-COPY workflows/ /app/workflows/
-COPY main.py /app/
-COPY requirements.txt /app/
+RUN pip install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu124
+
+# Copy the necessary files from the host 
+COPY requirements.txt . 
 
 # Install Python dependencies
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
+COPY workflows/ /app/workflows/
+COPY main.py . 
+COPY startup.sh .
+
 # Expose necessary ports
 EXPOSE 8000
+EXPOSE 8188
+
+RUN chmod +x startup.sh
 
 # Command to run the FastAPI application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/app/startup.sh"]

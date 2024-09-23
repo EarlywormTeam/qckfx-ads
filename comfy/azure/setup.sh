@@ -73,6 +73,12 @@ comfy node install ComfyUI-KJNodes
 comfy node install comfyui-mixlab-nodes
 comfy node install ComfyUI_Noise
 comfy node install comfyui-tensorops
+comfy node install masquerade-nodes-comfyui
+comfy node install https://github.com/EarlywormTeam/was-node-suite-comfyui.git
+comfy node install ComfyUI_LayerStyle
+comfy node install ComfyUI-IC-Light
+comfy node install CharacterFaceSwap
+comfy node install mikey_nodes
 
 echo "ComfyUI setup completed successfully."
 

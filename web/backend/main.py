@@ -446,7 +446,7 @@ async def callback(request: Request):
             key="session",
             value=json.dumps(session_data),
             httponly=True,
-            secure=True,
+            # secure=True,
             samesite="lax",
             max_age=172800  # 2 days
         )
