@@ -267,6 +267,7 @@ async def get_generation_job(generation_job_id: str):
                 "created_at": group.created_at.isoformat(),
                 "updated_at": group.updated_at.isoformat(),
                 "default_image_id": str(group.default_image_id) if group.default_image_id else None,
+                "prompt": generation_job.prompt,
                 "images": [{"url": image.url, "status": image.status, "created_at": image.created_at.isoformat(), "id": str(image.id)} for image in generated_images]
             }
             response["image_groups"].append(group_data)

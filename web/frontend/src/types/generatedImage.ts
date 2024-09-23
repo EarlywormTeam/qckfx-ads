@@ -12,6 +12,7 @@ export const ImageGroupSchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   defaultImageId: z.string().nullable(),
+  prompt: z.string(),
   images: z.array(GeneratedImageSchema),
 });
 

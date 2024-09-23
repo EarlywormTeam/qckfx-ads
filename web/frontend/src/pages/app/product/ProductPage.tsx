@@ -67,6 +67,7 @@ const ProductPage: React.FC = () => {
           setGeneratedImageGroups(prevGroups => {
             const newGroups = [...prevGroups];
             result.imageGroups!.forEach(group => {
+              // console.log(group, 'group');
               const existingIndex = newGroups.findIndex(g => g.id === group.id);
               if (existingIndex !== -1) {
                 newGroups[existingIndex] = group as ImageGroup;
@@ -126,7 +127,7 @@ const ProductPage: React.FC = () => {
       const result = await generateImageAPI.refineImage(
         group.id,
         currentImage.id,
-        prompt,
+        group.prompt,
       );
 
       // Poll for the refined image
