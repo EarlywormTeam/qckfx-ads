@@ -4,8 +4,15 @@ import ProductList from './ProductList';
 import { Button } from "@/components/ui/button";
 import { useAPI } from '@/api';
 import { Product } from '@/types/product';
+import { Organization } from '@/types/organization';
 
-const HomePage: React.FC = () => {
+// Remove the Organization type definition from here
+
+interface HomePageProps {
+  selectedOrg: Organization | null;
+}
+
+const HomePage: React.FC<HomePageProps> = ({ selectedOrg }) => {
   const navigate = useNavigate();
   const api = useAPI();
   const [products, setProducts] = useState<Product[]>([]);
@@ -13,10 +20,16 @@ const HomePage: React.FC = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      if (!selectedOrg) {
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
       try {
         const productAPI = api.createProductAPI();
-        // Note: You'll need to replace 'your-organization-id' with the actual organization ID
-        const fetchedProducts = await productAPI.getProducts('66d7a8396a02451726c6c05d');
+        const fetchedProducts = await productAPI.getProducts(selectedOrg.id);
         setProducts(fetchedProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -26,7 +39,7 @@ const HomePage: React.FC = () => {
     };
 
     fetchProducts();
-  }, [api]);
+  }, [api, selectedOrg]); // Add selectedOrg to the dependency array
 
   const handleCreateProduct = () => {
     navigate('/app/product/create');

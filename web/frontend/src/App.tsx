@@ -10,12 +10,9 @@ import RootLayout from './layouts/RootLayout';
 import { useState, useEffect } from 'react';
 import { APIProvider } from './api/APIProvider';
 import { API } from './api';
+import { Organization } from '@/types/organization';
 
-// Add Organization type
-type Organization = {
-  id: string;
-  name: string;
-};
+// Remove the Organization type definition from here
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -33,7 +30,9 @@ function App() {
         if (response.ok) {
           const data = await response.json();
           setOrganizations(data.organizations);
-          setSelectedOrg(data.organizations[0]);
+          if (!selectedOrg) {
+            setSelectedOrg(data.organizations[0]);
+          }
           setIsLoggedIn(true);
         } else {
           setIsLoggedIn(false);
@@ -75,7 +74,7 @@ function App() {
               <Route path="/" element={isLoggedIn ? <Navigate to="/app" replace /> : <LandingPage />} />
               <Route path="/app" element={
                 <ProtectedRoute>
-                  <HomePage />
+                  <HomePage selectedOrg={selectedOrg} />
                 </ProtectedRoute>
               } />
               <Route path="/app/product/:productName" element={

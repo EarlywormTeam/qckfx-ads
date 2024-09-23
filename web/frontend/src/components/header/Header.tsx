@@ -3,12 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Organization } from '@/types/organization';
 
-// Add Organization type
-type Organization = {
-  id: string;
-  name: string;
-};
+// Remove the Organization type definition from here
 
 interface HeaderProps {
   bypassAuth: boolean;
