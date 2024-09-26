@@ -11,13 +11,19 @@ import { ImageGroup, GeneratedImage } from '@/types/generatedImage';
 import { useProductAPI } from '@/api/product';
 import { saveAs } from 'file-saver';
 
-const ProductPage: React.FC = () => {
+import { Organization } from '@/types/organization';
+
+interface ProductPageProps {
+  selectedOrg: Organization | null;
+}
+
+const ProductPage: React.FC<ProductPageProps> = ({ selectedOrg }) => {
   const location = useLocation();
   const [product, /*setProduct*/] = useState<Product | null>(location.state?.product || null);
   const [loading, /*setLoading*/] = useState<boolean>(false);
   const [prompt, setPrompt] = useState<string>('');
   const [generatedImageGroups, setGeneratedImageGroups] = useState<ImageGroup[]>([]);
-  const [recentImageGroups, setRecentImageGroups] = useState<ImageGroup[]>([]);
+  const [/* recentImageGroups */, setRecentImageGroups] = useState<ImageGroup[]>([]);
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const generateImageAPI = useGenerateAPI(); 
@@ -279,12 +285,21 @@ const ProductPage: React.FC = () => {
   if (loading) return <div className="p-8">Loading...</div>;
   if (!product) return <div className="p-8">Product not found</div>;
 
-  const samplePrompts = [
+  const sampleCrunchyPrompts = [
     "A woman on the beach holding a can of Calm Crunchy sparkling water.",
     "A can of Calm Crunchy sparkling water at a picnic.",
     "A can of Calm Crunchy sparkling water on a table with a plant.",
     "A can of Calm Crunchy sparkling water on an iceberg floating in the ocean."
   ];
+
+  const sampleChePrompts = [
+    "Abstract french macaron",
+    "A larger than life macaron by the eiffel tower",
+    "A person enjoying a macaron at a French cafe",
+    "Macarons in a rainbow of colors"
+  ];
+
+  const samplePrompts = selectedOrg?.id === '66f468fecda608ea30c23f6d' ? sampleChePrompts : sampleCrunchyPrompts;
 
   const getMostRecentImage = (group: ImageGroup): GeneratedImage | undefined => {
     return group.images
@@ -448,7 +463,7 @@ const ProductPage: React.FC = () => {
       </div>
       
       {/* Recent Images */}
-      <h3 className="text-lg font-semibold mb-2">Recent Images</h3>
+      {/* <h3 className="text-lg font-semibold mb-2">Recent Images</h3>
       <div className="flex space-x-2 overflow-x-auto pb-4">
         {recentImageGroups.slice(0, 5).map((group) => {
           const mostRecentImage = getMostRecentImage(group);
@@ -462,7 +477,7 @@ const ProductPage: React.FC = () => {
             />
           );
         })}
-      </div>
+      </div> */}
 
       {/* Full-screen version history */}
       {fullscreenGroup && (

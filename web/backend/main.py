@@ -327,6 +327,7 @@ async def auth(request: Request):
     # Get the base URL from the request
     base_url = str(request.base_url).rstrip('/')
     redirect_uri = f"{base_url}/api/hooks/workos"
+    print(redirect_uri)
 
     authorization_url = workos_client.user_management.get_authorization_url(
         provider="authkit",

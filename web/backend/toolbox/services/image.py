@@ -1,9 +1,10 @@
 import os
+import asyncio
 from typing import Optional
 from dotenv import load_dotenv
 import replicate
 import fal_client
-
+import httpx
 from toolbox.services.flags import FeatureFlags
 from toolbox.services.comfy import ComfyService
 
@@ -23,6 +24,12 @@ class ImageService:
             return output
         except Exception as e:
             raise Exception(f"Error in background removal: {str(e)}")
+        
+    async def download_image(self, image_url):
+        async with httpx.AsyncClient() as client:
+            response = await client.get(image_url)
+            response.raise_for_status()
+            return response.content
 
     async def finetune_model(self, images_data_url, steps=1000, rank=16, learning_rate=0.0004,
                              caption_dropout_rate=0.05, trigger_word=None, captions_file_url=None,
@@ -134,13 +141,40 @@ class ImageService:
         Raises:
             Exception: If there's an error during image generation.
         """
-        try:
-            async for index, image_data in self.comfy_service.generate_images_stream(
-                prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt, image_name
-            ):
+        print("Generating images with product description: ", product_description, "lora_name: ", lora_name)
+        if product_description == "style":
+            output = await self.replicate_client.async_run(
+                lora_name,
+                input={
+                    "model": "dev",
+                    "width": 768,
+                    "height": 768,
+                    "prompt": prompt + "in the style of " + trigger_word + ".",
+                    "lora_scale": 1,
+                    "num_outputs": count,
+                    "aspect_ratio": "custom",
+                    "output_format": "jpg",
+                    "guidance_scale": 3.5,
+                    "prompt_strength": 0.8,
+                    "extra_lora_scale": 1,
+                    "num_inference_steps": 28
+                }
+            )
+            print(output)
+            # Download all images concurrently
+            image_data_list = await asyncio.gather(*[self.download_image(image_url) for image_url in output])
+            
+            # Yield images one by one
+            for index, image_data in enumerate(image_data_list):
                 yield index, image_data
-        except Exception as e:
-            raise Exception(f"Error in image generation stream: {str(e)}")
+        else:
+            try:
+                async for index, image_data in self.comfy_service.generate_images_stream(
+                    prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt, image_name
+                ):
+                    yield index, image_data
+            except Exception as e:
+                raise Exception(f"Error in image generation stream: {str(e)}")
 
 # Usage example:
 # image_service = ImageService()

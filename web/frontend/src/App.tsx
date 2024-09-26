@@ -79,7 +79,7 @@ function App() {
               } />
               <Route path="/app/product/:productName" element={
                 <ProtectedRoute>
-                  <ProductPage />
+                  <ProductPage selectedOrg={selectedOrg} />
                 </ProtectedRoute>
               } />
               <Route path="/app/product/create" element={

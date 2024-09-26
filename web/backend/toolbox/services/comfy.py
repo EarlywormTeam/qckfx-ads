@@ -11,12 +11,20 @@ from toolbox.services.flags import FeatureFlags
 class ComfyService:
     def __init__(self, flags: FeatureFlags):
         self.flags = flags
-        self.default_urls = json.loads('{ \
+        self.default_generate_urls = json.loads('{ \
             "urls": [ \
                 "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run", \
                 "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run", \
                 "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run", \
                 "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run" \
+            ] \
+        }')
+        self.default_simple_generate_urls = json.loads('{ \
+            "urls": [ \
+                "https://earlywormteam--product-shoot-comfyui-simple-gen.modal.run", \
+                "https://earlywormteam--product-shoot-comfyui-simple-gen.modal.run", \
+                "https://earlywormteam--product-shoot-comfyui-simple-gen.modal.run", \
+                "https://earlywormteam--product-shoot-comfyui-simple-gen.modal.run" \
             ] \
         }')
 
@@ -129,6 +137,41 @@ class ComfyService:
             return None
 
         return await self._make_request(url, payload, process_response)
+    
+    async def generate_simple_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str) -> AsyncGenerator[tuple[int, bytes | None], None]:
+        urls = self.flags.get_flag("simple_generate_urls", self.default_simple_generate_urls)["urls"]
+        if count > len(urls):
+            raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(urls)}")
+        url_list = random.sample(urls, count)
+
+        async def single_image_request(index: int):
+            seed = random.randint(0, 2**32 - 1)
+            payload = {
+                "prompt": prompt,
+                "count": 1,  # Always set to 1 for individual image generation
+                "product_id": product_id,
+                "gen_id": gen_id,
+                "seed": seed,
+                "lora_name": lora_name
+            }
+
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                try:
+                    response = await client.post(url_list[index], json=payload, timeout=400.0)
+                    if response.status_code == 200:
+                        json_response = response.json()
+                        if 'images' in json_response and json_response['images']:
+                            return index, base64.b64decode(json_response['images'][0])
+                        else:
+                            return index, None  # Image generation failed
+                except httpx.RequestError:
+                    return index, None  # Request failed
+            return index, None  # Default case: failed
+
+        tasks = [single_image_request(i) for i in range(count)] 
+        for task in asyncio.as_completed(tasks):
+            result = await task
+            yield result
 
     async def generate_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str, image_name: Optional[str] = None) -> AsyncGenerator[tuple[int, bytes | None], None]:
         """
@@ -150,7 +193,7 @@ class ComfyService:
         Raises:
             HTTPException: If all requests fail or return unexpected status codes.
         """
-        urls = self.flags.get_flag("gpu_urls", self.default_urls)["urls"]
+        urls = self.flags.get_flag("gpu_urls", self.default_generate_urls)["urls"]
         if count > len(urls):
             raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(urls)}")
         url_list = random.sample(urls, count)
@@ -158,7 +201,7 @@ class ComfyService:
         async def single_image_request(index: int):
             seed = random.randint(0, 2**32 - 1)
             payload = {
-                "prompt": "flux_realism " + prompt,
+                "prompt": prompt,
                 "count": 1,  # Always set to 1 for individual image generation
                 "product_id": product_id,
                 "gen_id": gen_id,

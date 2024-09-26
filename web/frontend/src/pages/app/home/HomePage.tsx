@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import ProductList from './ProductList';
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { useAPI } from '@/api';
 import { Product } from '@/types/product';
 import { Organization } from '@/types/organization';
@@ -13,7 +13,7 @@ interface HomePageProps {
 }
 
 const HomePage: React.FC<HomePageProps> = ({ selectedOrg }) => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const api = useAPI();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,27 +41,27 @@ const HomePage: React.FC<HomePageProps> = ({ selectedOrg }) => {
     fetchProducts();
   }, [api, selectedOrg]); // Add selectedOrg to the dependency array
 
-  const handleCreateProduct = () => {
-    navigate('/app/product/create');
-  };
+  // const handleCreateProduct = () => {
+  //   navigate('/app/product/create');
+  // };
 
   return (
     <div className="h-full w-full bg-background-white">
       <main className="max-w-6xl mx-auto p-6">
         <div className="flex flex-col mb-12">
           <div className="flex justify-center mb-8">
-            <Button 
+            {/* <Button 
               variant="secondary" 
               className="rounded-full items-center px-6 py-3 bg-background-action text-text-white hover:bg-background-dark"
               onClick={handleCreateProduct}
             >
               Create New Product
-            </Button>
+            </Button> */}
           </div>
-          <h2 className="text-2xl font-bold text-text-darkPrimary mb-6">Products</h2>
+          <h2 className="text-2xl font-bold text-text-darkPrimary mb-6">Products & Styles</h2>
         </div>
         {loading ? (
-          <p>Loading products...</p>
+          <p>Loading products & styles...</p>
         ) : (
           <ProductList products={products} />
         )}

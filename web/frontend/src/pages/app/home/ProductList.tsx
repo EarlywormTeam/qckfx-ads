@@ -1,6 +1,6 @@
 import { VariableSizeGrid as Grid } from 'react-window';
 import { useEffect, useState, useRef } from 'react';
-import { Plus } from 'lucide-react'; // Add this import for the plus icon
+// import { Plus } from 'lucide-react'; // Add this import for the plus icon
 import { useNavigate } from 'react-router-dom'; // Add this import
 import { Product } from '@/types/product';
 
@@ -13,19 +13,19 @@ const Cell: React.FC<{ columnIndex: number; rowIndex: number; style: React.CSSPr
   const index = rowIndex * 3 + columnIndex;
   const product = products[index];
 
-  if (index === products.length) {
-    // Render the "Add New Product" cell
-    return (
-      <div 
-        style={{...style}}
-        className="cursor-pointer bg-background-white transition-all duration-200 flex flex-col items-center justify-center group rounded-lg shadow-sm hover:shadow-md"
-        onClick={() => navigate('/app/product/create')} // Add this onClick handler
-      >
-        <Plus size={48} className="text-text-darkPrimary transition-transform duration-200 group-hover:scale-110" />
-        <span className="mt-2 text-sm font-medium text-text-darkPrimary">Add New Product</span>
-      </div>
-    );
-  }
+  // if (index === products.length) {
+  //   // Render the "Add New Product" cell
+  //   return (
+  //     <div 
+  //       style={{...style}}
+  //       className="cursor-pointer bg-background-white transition-all duration-200 flex flex-col items-center justify-center group rounded-lg shadow-sm hover:shadow-md"
+  //       onClick={() => navigate('/app/product/create')} // Add this onClick handler
+  //     >
+  //       <Plus size={48} className="text-text-darkPrimary transition-transform duration-200 group-hover:scale-110" />
+  //       <span className="mt-2 text-sm font-medium text-text-darkPrimary">Add New Product</span>
+  //     </div>
+  //   );
+  // }
 
   if (!product) return null;
 
@@ -75,7 +75,8 @@ const ProductList: React.FC<ProductListProps> = ({ products }) => {
 
   const columnCount = Math.max(1, Math.floor((containerWidth + gap) / (minCellWidth + gap)));
   const cellWidth = (containerWidth - (columnCount - 1) * gap) / columnCount;
-  const totalProducts = products.length + 1; // Add 1 for the "Add New Product" cell
+  const totalProducts = products.length;
+  // const totalProducts = products.length + 1; // Add 1 for the "Add New Product" cell
   const rowCount = Math.ceil(totalProducts / columnCount);
 
   const getColumnWidth = () => cellWidth + gap;
