@@ -109,14 +109,35 @@ fi
 
 # Med Intense Can Lora model
 echo "Downloading Med Intense Can Lora model..."
-lora_tar="/app/ComfyUI/models/loras/med_intense_can/trained_model.tar"
-if [ ! -f "$lora_tar" ]; then
+lora_file="/app/ComfyUI/models/loras/med_intense_can.safetensors"
+if [ ! -f "$lora_file" ]; then
     wget --header="Authorization: Bearer ${REPLICATE_API_TOKEN}" -P /app/ComfyUI/models/loras/med_intense_can https://replicate.delivery/yhqm/QRnYk8tBa84yCtjZC4ZfpJB4pHKL3vgZoVJwhOYqhpc6eEXTA/trained_model.tar
-    tar -xvf "$lora_tar" -C /app/ComfyUI/models/loras/med_intense_can
+    tar -xvf "/app/ComfyUI/models/loras/med_intense_can/trained_model.tar" -C /app/ComfyUI/models/loras/med_intense_can
     mv /app/ComfyUI/models/loras/med_intense_can/output/flux_train_replicate/lora.safetensors /app/ComfyUI/models/loras/med_intense_can.safetensors
     rm -rf /app/ComfyUI/models/loras/med_intense_can/trained_model.tar /app/ComfyUI/models/loras/med_intense_can/output
 else
     echo "Med Intense Can Lora model already exists. Skipping download."
+fi
+
+# Cognato cab model
+echo "Downloading Cognato cab Lora model..."
+lora_file="/app/ComfyUI/models/loras/cognato_cab.safetensors"
+if [ ! -f "$lora_file" ]; then
+    wget --header="Authorization: Bearer ${REPLICATE_API_TOKEN}" -P /app/ComfyUI/models/loras/cognato_cab https://replicate.delivery/yhqm/022tygSgjPrULhfDIxR1i0dgJnoafoav3Uhw3kshGyVhj2fmA/trained_model.tar 
+    tar -xvf "/app/ComfyUI/models/loras/cognato_cab/trained_model.tar" -C /app/ComfyUI/models/loras/cognato_cab
+    mv /app/ComfyUI/models/loras/cognato_cab/output/flux_train_replicate/lora.safetensors /app/ComfyUI/models/loras/cognato_cab.safetensors
+    rm -rf /app/ComfyUI/models/loras/cognato_cab/trained_model.tar /app/ComfyUI/models/loras/cognato_cab/output
+else
+    echo "Cognato Lora model already exists. Skipping download."
+fi
+
+# anti-blur model
+echo "Downloading anti-blur Lora model..."
+lora_file="/app/ComfyUI/models/loras/FLUX-dev-lora-AntiBlur.safetensors"
+if [ ! -f "$lora_file" ]; then
+    comfy --skip-prompt model download --url https://huggingface.co/Shakker-Labs/FLUX.1-dev-LoRA-AntiBlur/resolve/main/FLUX-dev-lora-AntiBlur.safetensors --relative-path /app/ComfyUI/models/loras 
+else
+    echo "Anti-blur Lora model already exists. Skipping download."
 fi
 
 # Flux Canny ControlNet model

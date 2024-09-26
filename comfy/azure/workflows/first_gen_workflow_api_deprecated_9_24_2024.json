@@ -115,7 +115,7 @@
   },
   "25": {
     "inputs": {
-      "noise_seed": 56382564739292
+      "noise_seed": 566725199480753
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -355,7 +355,7 @@
   },
   "125": {
     "inputs": {
-      "lora_name": "cognato_cab.safetensors",
+      "lora_name": "med_intense_can.safetensors",
       "strength_model": 0.93,
       "strength_clip": 0.9500000000000001,
       "model": [
@@ -414,7 +414,7 @@
   },
   "130": {
     "inputs": {
-      "image": "cognato_cab.png",
+      "image": "can.png",
       "upload": "image"
     },
     "class_type": "LoadImage",
@@ -448,7 +448,7 @@
     "inputs": {
       "filename_prefix": "ComfyUI",
       "images": [
-        "702",
+        "342",
         0
       ]
     },
@@ -550,7 +550,7 @@
   },
   "192": {
     "inputs": {
-      "noise_seed": 204087962119284
+      "noise_seed": 436786430827837
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -615,7 +615,7 @@
   },
   "212": {
     "inputs": {
-      "noise_seed": 1050488597094190
+      "noise_seed": 650993313192728
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -675,8 +675,8 @@
         0
       ],
       "clip": [
-        "11",
-        0
+        "297",
+        1
       ]
     },
     "class_type": "CLIPTextEncode",
@@ -686,7 +686,7 @@
   },
   "232": {
     "inputs": {
-      "guidance": 2,
+      "guidance": 2.5,
       "conditioning": [
         "231",
         0
@@ -737,7 +737,7 @@
   "235": {
     "inputs": {
       "scheduler": "karras",
-      "steps": 20,
+      "steps": 18,
       "denoise": 0.98,
       "model": [
         "361",
@@ -751,7 +751,7 @@
   },
   "236": {
     "inputs": {
-      "noise_seed": 284137673230480
+      "noise_seed": 711667049068551
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -983,6 +983,25 @@
       "title": "SamplerCustomAdvanced"
     }
   },
+  "297": {
+    "inputs": {
+      "lora_name": "flux_realism/lora.safetensors",
+      "strength_model": 0.65,
+      "strength_clip": 1,
+      "model": [
+        "12",
+        0
+      ],
+      "clip": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
   "299": {
     "inputs": {
       "model": [
@@ -1002,7 +1021,7 @@
   "300": {
     "inputs": {
       "scheduler": "normal",
-      "steps": 28,
+      "steps": 24,
       "denoise": 1,
       "model": [
         "329",
@@ -1025,7 +1044,7 @@
   },
   "303": {
     "inputs": {
-      "noise_seed": 185893633138177
+      "noise_seed": 1114902625396532
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1061,16 +1080,16 @@
   },
   "329": {
     "inputs": {
-      "lora_name": "cognato_cab.safetensors",
-      "strength_model": 0.35000000000000003,
+      "lora_name": "med_intense_can.safetensors",
+      "strength_model": 0.55,
       "strength_clip": 1,
       "model": [
-        "12",
+        "297",
         0
       ],
       "clip": [
-        "11",
-        0
+        "297",
+        1
       ]
     },
     "class_type": "LoraLoader",
@@ -1155,7 +1174,7 @@
   "361": {
     "inputs": {
       "model": [
-        "12",
+        "297",
         0
       ]
     },
@@ -1208,7 +1227,7 @@
   },
   "369": {
     "inputs": {
-      "guidance": 2,
+      "guidance": 4,
       "conditioning": [
         "295",
         0
@@ -1221,7 +1240,7 @@
   },
   "370": {
     "inputs": {
-      "ckpt_name": "epicrealism_naturalSinRC1VAE.safetensors"
+      "ckpt_name": "sd1/epicrealism_naturalSinRC1VAE.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
@@ -1283,6 +1302,21 @@
       "title": "Image Select Channel"
     }
   },
+  "377": {
+    "inputs": {
+      "brightness": 1.5,
+      "contrast": 1.5,
+      "saturation": 1,
+      "image": [
+        "375",
+        0
+      ]
+    },
+    "class_type": "LayerColor: Brightness & Contrast",
+    "_meta": {
+      "title": "LayerColor: Brightness & Contrast"
+    }
+  },
   "378": {
     "inputs": {
       "multiplier": 0.15,
@@ -1310,7 +1344,7 @@
   },
   "379": {
     "inputs": {
-      "seed": 236651113574392,
+      "seed": 926744863621945,
       "steps": 40,
       "cfg": 2,
       "sampler_name": "dpmpp_sde",
@@ -1341,7 +1375,7 @@
   "380": {
     "inputs": {
       "pixels": [
-        "700",
+        "377",
         0
       ],
       "vae": [
@@ -1469,7 +1503,7 @@
     },
     "class_type": "ControlNetApplyAdvanced",
     "_meta": {
-      "title": "Apply ControlNet"
+      "title": "Apply ControlNet (Advanced)"
     }
   },
   "392": {
@@ -1483,7 +1517,7 @@
   },
   "394": {
     "inputs": {
-      "seed": 973349052799759,
+      "seed": 668919510114137,
       "steps": 3,
       "cfg": 2,
       "sampler_name": "dpmpp_2m",
@@ -1966,12 +2000,12 @@
     },
     "class_type": "ControlNetApplyAdvanced",
     "_meta": {
-      "title": "Apply ControlNet"
+      "title": "Apply ControlNet (Advanced)"
     }
   },
   "483": {
     "inputs": {
-      "Text": "The image captures a woman in her mid-30s standing in a picturesque Napa Valley vineyard at golden hour. She's holding a single TOK can (labeled as Cognato) in her right hand. The scene is rich with detail and warm, late afternoon light. Detailed size and proportion observations:  TOK can dimensions:  Height: 14.5 cm (5.7 inches) Diameter: 6.3 cm (2.5 inches) Volume: 330 ml (11.2 fl oz)   Woman's proportions:  Height: Approximately 170 cm (5'7\") Hand size: The can's diameter is about 3/4 the width of her palm   Can relative to the woman:  The can's height is roughly the length of her hand from wrist to fingertips It's about 1/12th of her total height The can's diameter is approximately the width of two of her fingers   Environmental size comparisons:  Grape vines: The can is about 1/3 the height of the nearest vine's main stem Wine glasses (on a nearby table): The can is about 3/4 the height of a standard wine glass Grape clusters: The can is about twice the length of a mature grape cluster   Lighting and shadows:  The golden hour sun casts long shadows, with the woman's shadow stretching about 2.5 times her height The can casts a shadow across her hand, accentuating its cylindrical shape   Clothing and accessories:  She wears a flowing sundress that reaches her knees, its hem swaying slightly in the breeze A wide-brimmed sun hat sits atop her head, its diameter about 4 times that of the TOK can   Vineyard details:  Rows of vines stretch into the distance, spaced about 2.5 meters (8 feet) apart Each vine stand is approximately 1.8 meters (6 feet) tall, about 12 times the height of the TOK can   Background elements:  A traditional stone winery building is visible in the mid-distance, its height roughly 40 times that of the TOK can Rolling hills in the background showcase the scale of the valley, with the nearest hill about 500 times taller than the can   Can details:  The label covers about 80% of the can's surface The hot air balloon logo on the can is clearly visible, occupying about 1/4 of the label's height Condensation beads on the can's surface, each droplet about 1-2mm in diameter    The image beautifully contrasts the sleek, modern TOK can against the timeless backdrop of Napa Valley. The woman's relaxed posture and smile suggest a moment of enjoyment, with the can's size emphasizing its convenience and portability in this picturesque setting."
+      "Text": "A woman hiking holding a light blue can of Calm Crunchy sparkling water. "
     },
     "class_type": "DF_Text",
     "_meta": {
@@ -1980,7 +2014,7 @@
   },
   "511": {
     "inputs": {
-      "Text": "A photo of TOK, a white can of Cognato cabernet sauvignon wine. The top of the can reading \"A PRODUCT OF SOUTH AFRICA\" in arching red letters above the hot air balloon logo, below that the hot air balloon logo in black and white (the top of the hot air balloon is shaded black), below that in red lettering: \"DE_ALCOHOLISED WINE\", below that in larger red serif font: \"COGNATO\", below that in small red lettering again \"CABERNET SAUVIGNON\", then below that the fair trade logo, and finally at the bottom a hand-drawn sketch of mountains in black and white in what looks like a graphite pencil sketch. The can is made of aluminum with the pure aluminum color showing at the very top and bottom of the can, but the majority of the can is wrapped in the white label described above."
+      "Text": "a woman holding a light blue can of Calm Crunchy sparkling water. From top to bottom, the label reads \"SPARKLING ADAPTOGENIC WATER\" around the white strip at the top, then on the blue background: \"CRUNCHY\", logo, \"HYDRATION\", then a long gap, \"CALM\", then stacked on top of each other: \"watermelon\", in very small font: \"vegan & gluten-free\", \"12 FL OZ (355 ML)\"."
     },
     "class_type": "DF_Text",
     "_meta": {
@@ -2154,7 +2188,7 @@
         0
       ],
       "image": [
-        "647",
+        "441",
         0
       ]
     },
@@ -2244,7 +2278,7 @@
         2
       ],
       "image": [
-        "647",
+        "441",
         0
       ]
     },
@@ -2295,7 +2329,7 @@
   },
   "574": {
     "inputs": {
-      "lora_name": "cognato_cab.safetensors",
+      "lora_name": "med_intense_can.safetensors",
       "strength_model": 0.93,
       "strength_clip": 0.9500000000000001,
       "model": [
@@ -2348,7 +2382,7 @@
     },
     "class_type": "ControlNetApplyAdvanced",
     "_meta": {
-      "title": "Apply ControlNet"
+      "title": "Apply ControlNet (Advanced)"
     }
   },
   "581": {
@@ -2609,7 +2643,7 @@
   "645": {
     "inputs": {
       "mode": "soft_light",
-      "blur_sigma": 10,
+      "blur_sigma": 5,
       "blend_factor": 1,
       "target": [
         "441",
@@ -2762,7 +2796,7 @@
   },
   "661": {
     "inputs": {
-      "noise_seed": 485747507185322
+      "noise_seed": 195425452505303
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -2944,18 +2978,6 @@
       "title": "CLIP Text Encode (Prompt)"
     }
   },
-  "688": {
-    "inputs": {
-      "images": [
-        "474",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
   "690": {
     "inputs": {
       "blend_percentage": 0.85,
@@ -2989,106 +3011,17 @@
       "title": "Convert Mask to Image"
     }
   },
-  "693": {
+  "698": {
     "inputs": {
-      "images": [
-        "690",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "694": {
-    "inputs": {
-      "images": [
-        "664",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "695": {
-    "inputs": {
-      "images": [
-        "214",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "697": {
-    "inputs": {
-      "images": [
-        "655",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "700": {
-    "inputs": {
-      "brightness": 1.5,
-      "contrast": 1.5,
-      "saturation": 1,
-      "image": [
-        "375",
-        0
-      ]
-    },
-    "class_type": "LayerColor: Brightness & Contrast",
-    "_meta": {
-      "title": "LayerColor: Brightness & Contrast"
-    }
-  },
-  "702": {
-    "inputs": {
-      "brightness": 0.96,
-      "contrast": 0.87,
-      "saturation": 0.9,
-      "image": [
-        "342",
-        0
-      ]
-    },
-    "class_type": "LayerColor: Brightness & Contrast",
-    "_meta": {
-      "title": "LayerColor: Brightness & Contrast"
-    }
-  },
-  "703": {
-    "inputs": {
-      "images": [
-        "342",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "704": {
-    "inputs": {
+      "filename_prefix": "ComfyUI",
       "images": [
         "195",
         0
       ]
     },
-    "class_type": "PreviewImage",
+    "class_type": "SaveImage",
     "_meta": {
-      "title": "Preview Image"
+      "title": "Save Image"
     }
   }
 }

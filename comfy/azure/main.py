@@ -42,6 +42,7 @@ class FirstGenRequest(BaseModel):
     product_description: str
     detection_prompt: str
     count: int = 1  # Optional, default to 1
+    image_name: str
 
 class RefineFirstGenRequest(BaseModel):
     gen_id: str
@@ -156,13 +157,14 @@ def startup_event():
 def first_gen(request: FirstGenRequest):
     print(f"first_gen {request.gen_id}")
     try:
+        launch_comfyui()
         # Load the workflow template
         workflow_path = WORKFLOWS_DIR / "first_gen_workflow_api.json"
         workflow_data = json.loads(workflow_path.read_text())
 
         # Modify the workflow based on the request
         workflow_data["295"]["inputs"]["text"] = f"{request.trigger_word} {request.prompt}"
-        workflow_data["483"]["inputs"]["text"] = f"{request.trigger_word} {request.prompt}"
+        workflow_data["483"]["inputs"]["Text"] = f"{request.trigger_word} {request.prompt}"
  
         # Set the number of images to generate
         workflow_data["304"]["inputs"]["batch_size"] = request.count
@@ -178,6 +180,8 @@ def first_gen(request: FirstGenRequest):
 
         # Set the product description
         workflow_data["511"]["inputs"]["Text"] = request.product_description
+
+        workflow_data["130"]["inputs"]["image"] = request.image_name
 
         # Set the detection prompt
         detection_nodes = ["120", "128", "168", "266", "283", "425", "468", "556", "563", "596", "651", "666", ]
@@ -196,7 +200,7 @@ def first_gen(request: FirstGenRequest):
 
         # Run the workflow
         print(f"starting comfy run {request.gen_id}")
-        run_comfy_command(f"comfy run --workflow {new_workflow_file} --wait --verbose --timeout 1200")
+        run_comfy_command(f"comfy run --workflow {new_workflow_file} --wait --verbose --timeout 150")
         print(f"finished comfy run {request.gen_id}")
 
         # Retrieve output images
@@ -207,6 +211,8 @@ def first_gen(request: FirstGenRequest):
 
         # Encode images as base64
         encoded_images = [base64.b64encode(img).decode('utf-8') for img in image_bytes_list]
+
+        run_comfy_command("comfy stop")
 
         return JSONResponse(content={"images": encoded_images})
 
@@ -249,7 +255,7 @@ def refine_first_gen(request: RefineFirstGenRequest):
             json.dump(workflow_data, f)
 
         # Run the workflow
-        run_comfy_command(f"comfy run --workflow {new_workflow_file} --wait --verbose --timeout 1200")
+        run_comfy_command(f"comfy run --workflow {new_workflow_file} --wait --verbose --timeout 150")
 
         # Retrieve output images
         image_bytes_list = find_output_images(f"{request.gen_id}_refine_first_gen")
@@ -306,7 +312,7 @@ def refine_object(request: RefineObjectRequest):
             json.dump(workflow_data, f)
 
         # Run the workflow
-        run_comfy_command(f"comfy run --workflow {new_workflow_file} --wait --verbose --timeout 1200")
+        run_comfy_command(f"comfy run --workflow {new_workflow_file} --wait --verbose --timeout 150")
 
         # Retrieve output images
         image_bytes_list = find_output_images(f"{request.gen_id}_refine_object")
