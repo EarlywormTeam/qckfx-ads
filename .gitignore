@@ -1,3 +1,5 @@
+*.pfx
+*.key
 *.pem
 .DS_Store
 
