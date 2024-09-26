@@ -141,8 +141,8 @@ class ImageService:
         Raises:
             Exception: If there's an error during image generation.
         """
-        print("Generating images with product description: ", product_description, "lora_name: ", lora_name)
         if product_description == "style":
+            print("Generating images with product description: ", product_description, "lora_name: ", lora_name)
             async for index, image_data in self.comfy_service.generate_simple_images_stream(
                 prompt + " in the style of " + trigger_word,
                 count,

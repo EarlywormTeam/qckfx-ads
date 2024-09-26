@@ -243,10 +243,10 @@ def simple_gen(request: SimpleGenRequest):
         workflow_data["16"]["inputs"]["text"] = request.prompt
 
         # Set the filename prefix for saving the image
-        workflow_data["6"]["inputs"]["filename_prefix"] = f"{request.gen_id}_{request.noise_seed}_simple_gen"
+        workflow_data["6"]["inputs"]["filename_prefix"] = f"{request.gen_id}_{request.seed}_simple_gen"
 
         # Save the modified workflow
-        new_workflow_file = WORKFLOWS_DIR / f"{request.gen_id}_{request.noise_seed}_simple_gen.json"
+        new_workflow_file = WORKFLOWS_DIR / f"{request.gen_id}_{request.seed}_simple_gen.json"
         with new_workflow_file.open("w") as f:
             json.dump(workflow_data, f)
 
