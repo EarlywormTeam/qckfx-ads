@@ -256,7 +256,7 @@ def simple_gen(request: SimpleGenRequest):
         print(f"Finished simple_gen run {request.gen_id}")
 
         # Retrieve output images
-        image_bytes_list = find_output_images(f"{request.gen_id}_{request.noise_seed}_simple_gen")
+        image_bytes_list = find_output_images(f"{request.gen_id}_{request.seed}_simple_gen")
 
         if not image_bytes_list:
             raise HTTPException(status_code=404, detail="No images found.")
