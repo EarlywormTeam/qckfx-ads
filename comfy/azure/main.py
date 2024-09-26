@@ -57,6 +57,12 @@ class RefineObjectRequest(BaseModel):
     image: str  # Base64 encoded image
     # seed: int  # Uncomment if needed
 
+class SimpleGenRequest(BaseModel):
+    gen_id: str
+    seed: int
+    prompt: str
+    lora_name: str
+
 # Helper Functions
 def run_comfy_command(cmd: str, cwd: Path = COMFYUI_DIR) -> None:
     """Run a ComfyUI command and stream output in real-time."""
@@ -219,6 +225,51 @@ def first_gen(request: FirstGenRequest):
     except Exception as e:
         print(f"Error in first_gen: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.post("/simple_gen")
+def simple_gen(request: SimpleGenRequest):
+    try:
+        # Load the workflow template
+        workflow_path = WORKFLOWS_DIR / "simple_gen_workflow_api.json"
+        workflow_data = json.loads(workflow_path.read_text())
+
+        # Set the LoRA name
+        workflow_data["5"]["inputs"]["lora_name"] = request.lora_name
+
+        # Set the noise seed
+        workflow_data["8"]["inputs"]["noise_seed"] = request.seed
+
+        # Set the prompt
+        workflow_data["16"]["inputs"]["text"] = request.prompt
+
+        # Set the filename prefix for saving the image
+        workflow_data["6"]["inputs"]["filename_prefix"] = f"{request.gen_id}_{request.noise_seed}_simple_gen"
+
+        # Save the modified workflow
+        new_workflow_file = WORKFLOWS_DIR / f"{request.gen_id}_{request.noise_seed}_simple_gen.json"
+        with new_workflow_file.open("w") as f:
+            json.dump(workflow_data, f)
+
+        # Run the workflow
+        print(f"Starting simple_gen run {request.gen_id}")
+        run_comfy_command(f"comfy run --workflow {new_workflow_file} --wait --verbose --timeout 150")
+        print(f"Finished simple_gen run {request.gen_id}")
+
+        # Retrieve output images
+        image_bytes_list = find_output_images(f"{request.gen_id}_{request.noise_seed}_simple_gen")
+
+        if not image_bytes_list:
+            raise HTTPException(status_code=404, detail="No images found.")
+
+        # Encode images as base64
+        encoded_images = [base64.b64encode(img).decode('utf-8') for img in image_bytes_list]
+
+        return JSONResponse(content={"images": encoded_images})
+
+    except Exception as e:
+        print(f"Error in simple_gen: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/ping")
 def ping():

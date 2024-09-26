@@ -143,34 +143,18 @@ class ImageService:
         """
         print("Generating images with product description: ", product_description, "lora_name: ", lora_name)
         if product_description == "style":
-            output = await self.replicate_client.async_run(
-                lora_name,
-                input={
-                    "model": "dev",
-                    "width": 768,
-                    "height": 768,
-                    "prompt": prompt + "in the style of " + trigger_word + ".",
-                    "lora_scale": 1,
-                    "num_outputs": count,
-                    "aspect_ratio": "custom",
-                    "output_format": "jpg",
-                    "guidance_scale": 3.5,
-                    "prompt_strength": 0.8,
-                    "extra_lora_scale": 1,
-                    "num_inference_steps": 28
-                }
-            )
-            print(output)
-            # Download all images concurrently
-            image_data_list = await asyncio.gather(*[self.download_image(image_url) for image_url in output])
-            
-            # Yield images one by one
-            for index, image_data in enumerate(image_data_list):
+            async for index, image_data in self.comfy_service.generate_simple_images_stream(
+                prompt + " in the style of " + trigger_word,
+                count,
+                product_id,
+                gen_id,
+                lora_name
+            ):
                 yield index, image_data
         else:
             try:
                 async for index, image_data in self.comfy_service.generate_images_stream(
-                    prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt, image_name
+                    "A photo of " + trigger_word + " " + prompt, count, product_id, gen_id, lora_name, product_description, trigger_word, detection_prompt, image_name
                 ):
                     yield index, image_data
             except Exception as e:
