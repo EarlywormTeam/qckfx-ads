@@ -5,12 +5,22 @@ import random
 import asyncio
 import json
 from typing import Callable, Any, AsyncGenerator, Optional
+from collections import deque
 
 from toolbox.services.flags import FeatureFlags
 
 class ComfyService:
     def __init__(self, flags: FeatureFlags):
         self.flags = flags
+        self.default_base_urls = json.loads('{ \
+            "urls": [ \
+                "https://earlywormteam--product-shoot-comfyui.modal.run", \
+                "https://earlywormteam--product-shoot-comfyui.modal.run", \
+                "https://earlywormteam--product-shoot-comfyui.modal.run", \
+                "https://earlywormteam--product-shoot-comfyui.modal.run" \
+            ] \
+        }')
+        self.gpu_base_urls = flags.get_flag("gpu_base_urls", self.default_base_urls)["urls"]
         self.default_generate_urls = json.loads('{ \
             "urls": [ \
                 "https://earlywormteam--product-shoot-comfyui-first-gen.modal.run", \
@@ -27,16 +37,50 @@ class ComfyService:
                 "https://earlywormteam--product-shoot-comfyui-simple-gen.modal.run" \
             ] \
         }')
+        self.url_queues = [asyncio.Queue() for _ in self.gpu_base_urls]
+        self.workers = []
+        for idx, url in enumerate(self.gpu_base_urls):
+            worker = asyncio.create_task(self._queue_worker(idx, url))
+            self.workers.append(worker)
 
-    async def _make_dual_requests(self, url: str, payload: dict, process_response: Callable[[dict], Any]) -> Any:
-        results = await asyncio.gather(self._make_request(url, payload, process_response), self._make_request(url, payload, process_response))
-        successful_result = next((result for result in results if result is not None), None)
-
-        if successful_result:
-            return successful_result
-        else:
-            raise HTTPException(status_code=500, detail="Both requests failed")
+    async def _queue_worker(self, queue_index: int, url: str):
+        """
+        Worker that processes requests from its assigned queue one at a time.
         
+        Args:
+            queue_index (int): The index of the queue in the url_queues list.
+            url (str): The URL endpoint associated with this queue.
+        """
+        queue = self.url_queues[queue_index]
+        while True:
+            payload, process_response, future = await queue.get()
+            try:
+                response = await self._make_request(url, payload, process_response)
+                future.set_result(response)
+            except Exception as e:
+                future.set_exception(e)
+            finally:
+                queue.task_done()
+
+    async def _enqueue_request(self, payload: dict, process_response: Callable[[dict], Any]) -> Any:
+        """
+        Enqueue a request to the first available queue.
+        
+        Args:
+            payload (dict): The payload to send in the request.
+            process_response (Callable[[dict], Any]): Function to process the JSON response.
+        
+        Returns:
+            Any: The processed response.
+        """
+        # Simple round-robin assignment
+        queue_index = random.randint(0, len(self.url_queues) - 1)
+        queue = self.url_queues[queue_index]
+        loop = asyncio.get_running_loop()
+        future = loop.create_future()
+        await queue.put((payload, process_response, future))
+        return await future
+
     async def _make_request(self, url: str, payload: dict, process_response: Callable[[dict], Any]) -> Any:
         async with httpx.AsyncClient(follow_redirects=True) as client:
             try:
@@ -70,7 +114,6 @@ class ComfyService:
         urls = self.flags.get_flag("gpu_urls", self.default_urls)["urls"]
         if count > len(urls):
             raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(urls)}")
-        url_list = random.sample(urls, count)
 
         async def single_image_request():
             seed = random.randint(0, 2**32 - 1)
@@ -91,7 +134,7 @@ class ComfyService:
                     return [base64.b64decode(json_response['images'][0])]
                 return None
 
-            return await self._make_request(url_list[0], payload, process_response)
+            return await self._enqueue_request(payload, process_response)
 
         # Generate 'count' number of images using individual requests
         image_data_list = await asyncio.gather(*[single_image_request() for _ in range(count)])
@@ -120,8 +163,6 @@ class ComfyService:
         Raises:
             HTTPException: If the request fails or returns an unexpected status code.
         """
-        urls = self.flags.get_flag("gpu_urls", self.default_urls)["urls"]
-        url = random.sample(urls, 1)[0]
         seed = random.randint(0, 2**32 - 1)
         payload = {
             "prompt": product_description,  # Use the product description as the main prompt
@@ -136,13 +177,12 @@ class ComfyService:
                 return [base64.b64decode(img) for img in json_response['images']]
             return None
 
-        return await self._make_request(url, payload, process_response)
+        return await self._enqueue_request(payload, process_response)
     
     async def generate_simple_images_stream(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str) -> AsyncGenerator[tuple[int, bytes | None], None]:
         urls = self.flags.get_flag("simple_generate_urls", self.default_simple_generate_urls)["urls"]
         if count > len(urls):
             raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(urls)}")
-        url_list = random.sample(urls, count)
 
         async def single_image_request(index: int):
             seed = random.randint(0, 2**32 - 1)
@@ -155,18 +195,13 @@ class ComfyService:
                 "lora_name": lora_name
             }
 
-            async with httpx.AsyncClient(follow_redirects=True) as client:
-                try:
-                    response = await client.post(url_list[index], json=payload, timeout=400.0)
-                    if response.status_code == 200:
-                        json_response = response.json()
-                        if 'images' in json_response and json_response['images']:
-                            return index, base64.b64decode(json_response['images'][0])
-                        else:
-                            return index, None  # Image generation failed
-                except httpx.RequestError:
-                    return index, None  # Request failed
-            return index, None  # Default case: failed
+            def process_response(json_response: dict) -> Optional[bytes]:
+                if 'images' in json_response and json_response['images']:
+                    return base64.b64decode(json_response['images'][0])
+                return None
+
+            result = await self._enqueue_request(payload, process_response)
+            return index, result
 
         tasks = [single_image_request(i) for i in range(count)] 
         for task in asyncio.as_completed(tasks):
@@ -196,7 +231,6 @@ class ComfyService:
         urls = self.flags.get_flag("gpu_urls", self.default_generate_urls)["urls"]
         if count > len(urls):
             raise HTTPException(status_code=400, detail=f"Count exceeds available URLs. Maximum count is {len(urls)}")
-        url_list = random.sample(urls, count)
         
         async def single_image_request(index: int):
             seed = random.randint(0, 2**32 - 1)
@@ -213,18 +247,12 @@ class ComfyService:
                 "image_name": image_name
             }
 
-            async with httpx.AsyncClient(follow_redirects=True) as client:
-                try:
-                    response = await client.post(url_list[index], json=payload, timeout=400.0)
-                    if response.status_code == 200:
-                        json_response = response.json()
-                        if 'images' in json_response and json_response['images']:
-                            return index, base64.b64decode(json_response['images'][0])
-                        else:
-                            return index, None  # Image generation failed
-                except httpx.RequestError:
-                    return index, None  # Request failed
-            return index, None  # Default case: failed
+            def process_response(json_response: dict) -> Optional[bytes]:
+                if 'images' in json_response and json_response['images']:
+                    return base64.b64decode(json_response['images'][0])
+                return None
+
+            return await self._enqueue_request(payload, process_response)
 
         tasks = [single_image_request(i) for i in range(count)]
         for task in asyncio.as_completed(tasks):

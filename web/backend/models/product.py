@@ -61,7 +61,7 @@ class Product(Document):
                organization_id: PydanticObjectId,
                created_by_user_id: PydanticObjectId, 
                primary_image_url: str, 
-               model_id: str, 
+               model_id: Optional[str] = None, 
                additional_image_urls: Optional[List[str]] = None):
         return cls(
             name=name,
