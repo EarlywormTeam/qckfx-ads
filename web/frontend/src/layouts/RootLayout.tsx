@@ -7,19 +7,15 @@ type Organization = {
 };
 
 interface RootLayoutProps {
-  isLoggedIn: boolean;
-  bypassAuth: boolean;
   organizations: Organization[];
   selectedOrg: Organization | null;
   setSelectedOrg: (org: Organization | null) => void;
 }
 
-const RootLayout: React.FC<RootLayoutProps> = ({ isLoggedIn, bypassAuth, organizations, selectedOrg, setSelectedOrg }) => {
+const RootLayout: React.FC<RootLayoutProps> = ({ organizations, selectedOrg, setSelectedOrg }) => {
   return (
     <div className="flex flex-col h-full w-full">
       <Header
-        bypassAuth={bypassAuth}
-        isLoggedIn={isLoggedIn}
         organizations={organizations}
         selectedOrg={selectedOrg}
         setSelectedOrg={setSelectedOrg}

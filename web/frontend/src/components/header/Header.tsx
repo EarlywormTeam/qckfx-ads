@@ -1,36 +1,70 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Logo from './Logo';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Organization } from '@/types/organization';
-
-// Remove the Organization type definition from here
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Plus } from "lucide-react";
+import { useAssetAPI } from '@/api/asset';
+import { useAuth } from '@/hooks/useAuth';
 
 interface HeaderProps {
-  bypassAuth: boolean;
-  isLoggedIn: boolean;
   organizations: Organization[];
   selectedOrg: Organization | null;
   setSelectedOrg: (org: Organization | null) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ bypassAuth, isLoggedIn, organizations, selectedOrg, setSelectedOrg }) => {
+const Header: React.FC<HeaderProps> = ({ organizations, selectedOrg, setSelectedOrg }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const isLandingPage = location.pathname === '/';
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  const assetAPI = useAssetAPI();
+  const { isAuthenticated, isLoading, signIn, signOut } = useAuth();
 
   const handleSignIn = (event: React.MouseEvent) => {
     event.preventDefault();
-    if (bypassAuth) {
-      window.location.href = '/app';
-    } else {
-      window.location.href = '/auth';
-    }
+    signIn();
   };
 
   const handleLogoClick = () => {
-    navigate(isLoggedIn ? '/app' : '/');
+    navigate(isAuthenticated ? '/app' : '/');
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    console.log('uploading files', files, selectedOrg);
+    if (files && selectedOrg) {
+      try {
+        await assetAPI.uploadFiles(Array.from(files), selectedOrg.id);
+        console.log('Files uploaded successfully');
+        // TODO: Handle successful upload (e.g., show a success message, refresh file list)
+      } catch (error) {
+        console.error('Error uploading files:', error);
+        // TODO: Handle upload error (e.g., show an error message)
+      }
+    }
+  };
+
+  const handleUploadClick = (isFolder: boolean) => {
+    console.log('clicked upload files', isFolder);
+    const inputRef = isFolder ? folderInputRef : fileInputRef;
+    inputRef.current?.click();
+  };
+
+  const handleSignOut = () => {
+    signOut();
+    navigate('/');
+  };
+
+  const handleOrganizationChange = (value: string) => {
+    if (value === "sign-out") {
+      handleSignOut();
+    } else {
+      setSelectedOrg(organizations.find(org => org.id === value) || null);
+    }
   };
 
   return (
@@ -39,22 +73,53 @@ const Header: React.FC<HeaderProps> = ({ bypassAuth, isLoggedIn, organizations, 
         <Logo />
       </div>
       <div className="flex items-center space-x-4">
-        {isLoggedIn && !isLandingPage && (
-          <Select 
-            value={selectedOrg?.id} 
-            onValueChange={(value) => setSelectedOrg(organizations.find(org => org.id === value) || null)}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Select organization" />
-            </SelectTrigger>
-            <SelectContent>
-              {organizations.map((org) => (
-                <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        {isAuthenticated && !isLandingPage && (
+          <>
+            <input
+              type="file"
+              ref={fileInputRef}
+              style={{ display: 'none' }}
+              onChange={handleFileUpload}
+              multiple
+            />
+            <input
+              type="file"
+              ref={folderInputRef}
+              style={{ display: 'none' }}
+              onChange={handleFileUpload}
+              {...{ webkitdirectory: "", directory: "" } as React.InputHTMLAttributes<HTMLInputElement>}
+              multiple
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => handleUploadClick(false)}>Upload File</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleUploadClick(true)}>Upload Folder</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Select 
+              value={selectedOrg?.id} 
+              onValueChange={handleOrganizationChange}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Select organization" />
+              </SelectTrigger>
+              <SelectContent>
+                {organizations.map((org) => (
+                  <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                ))}
+                <SelectItem value="sign-out" className="text-red-500">
+                  Sign Out
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </>
         )}
-        {isLandingPage || !isLoggedIn ? (
+        {(isLandingPage || !isAuthenticated) && !isLoading ? (
           <Button 
             variant="ghost" 
             className={`font-bold text-md ${isLandingPage ? 'text-text-black' : 'text-text-darkPrimary'}`}

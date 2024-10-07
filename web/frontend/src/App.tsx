@@ -11,67 +11,59 @@ import { useState, useEffect } from 'react';
 import { APIProvider } from './api/APIProvider';
 import { API } from './api';
 import { Organization } from '@/types/organization';
-
-// Remove the Organization type definition from here
+import { useAuth } from '@/hooks/useAuth';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [bypassAuth, setBypassAuth] = useState(false);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
-  const isDev = process.env.NODE_ENV === 'development';
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    const checkLoginStatus = async () => {
+    const fetchOrganizations = async () => {
       try {
-        const response = await fetch('/api/auth/status', {
+        const response = await fetch('/api/user/organization', {
           credentials: 'include'
         });
         if (response.ok) {
           const data = await response.json();
           setOrganizations(data.organizations);
-          if (!selectedOrg) {
+          if (!selectedOrg && data.organizations.length > 0) {
             setSelectedOrg(data.organizations[0]);
           }
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
         }
-      } catch {
-        setIsLoggedIn(false);
+      } catch (error) {
+        console.error('Error fetching organizations:', error);
       }
     };
 
-    checkLoginStatus();
-  }, []);
+    if (isAuthenticated) {
+      fetchOrganizations();
+    }
+  }, [isAuthenticated]);
 
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    if (isLoggedIn || bypassAuth) {
-      return <>{children}</>;
+    if (isLoading) {
+      return <div>Loading...</div>;
     }
-    return <Navigate to="/" replace />;
+    if (!isAuthenticated) {
+      return <Navigate to="/" replace />;
+    }
+    return <>{children}</>;
   };
 
   return (
     <ErrorBoundary>
       <APIProvider api={new API()}>
         <BrowserRouter>
-          {isDev && (
-            <button onClick={() => setBypassAuth(!bypassAuth)}>
-              {bypassAuth ? 'Disable' : 'Enable'} Auth Bypass
-            </button>
-          )}
           <Routes>
             <Route element={
               <RootLayout
-                isLoggedIn={isLoggedIn}
-                bypassAuth={bypassAuth}
                 organizations={organizations}
                 selectedOrg={selectedOrg}
                 setSelectedOrg={setSelectedOrg}
               />
             }>
-              <Route path="/" element={isLoggedIn ? <Navigate to="/app" replace /> : <LandingPage />} />
+              <Route path="/" element={isAuthenticated ? <Navigate to="/app" replace /> : <LandingPage />} />
               <Route path="/app" element={
                 <ProtectedRoute>
                   <HomePage selectedOrg={selectedOrg} />
