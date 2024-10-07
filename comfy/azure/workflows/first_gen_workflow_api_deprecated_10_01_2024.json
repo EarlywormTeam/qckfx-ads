@@ -1,10 +1,13 @@
 {
   "6": {
     "inputs": {
-      "text": "a woman holding a purple can.",
-      "clip": [
-        "11",
+      "text": [
+        "511",
         0
+      ],
+      "clip": [
+        "125",
+        1
       ]
     },
     "class_type": "CLIPTextEncode",
@@ -72,7 +75,7 @@
   },
   "16": {
     "inputs": {
-      "sampler_name": "euler"
+      "sampler_name": "lcm"
     },
     "class_type": "KSamplerSelect",
     "_meta": {
@@ -81,11 +84,11 @@
   },
   "17": {
     "inputs": {
-      "scheduler": "simple",
-      "steps": 20,
-      "denoise": 1,
+      "scheduler": "normal",
+      "steps": 10,
+      "denoise": 0.98,
       "model": [
-        "12",
+        "65",
         0
       ]
     },
@@ -97,7 +100,7 @@
   "22": {
     "inputs": {
       "model": [
-        "12",
+        "65",
         0
       ],
       "conditioning": [
@@ -112,11 +115,36 @@
   },
   "25": {
     "inputs": {
-      "noise_seed": 222780177739808
+      "noise_seed": 56382564739292
     },
     "class_type": "RandomNoise",
     "_meta": {
       "title": "RandomNoise"
+    }
+  },
+  "26": {
+    "inputs": {
+      "guidance": 3,
+      "conditioning": [
+        "579",
+        0
+      ]
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "FluxGuidance"
+    }
+  },
+  "65": {
+    "inputs": {
+      "model": [
+        "125",
+        0
+      ]
+    },
+    "class_type": "DifferentialDiffusion",
+    "_meta": {
+      "title": "Differential Diffusion"
     }
   },
   "66": {
@@ -325,6 +353,25 @@
       "title": "Mask Crop Region"
     }
   },
+  "125": {
+    "inputs": {
+      "lora_name": "cognato_cab.safetensors",
+      "strength_model": 0.93,
+      "strength_clip": 0.9500000000000001,
+      "model": [
+        "12",
+        0
+      ],
+      "clip": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
   "126": {
     "inputs": {
       "model_name": "GroundingDINO_SwinT_OGC (694MB)"
@@ -367,7 +414,7 @@
   },
   "130": {
     "inputs": {
-      "image": "bliss.png",
+      "image": "cognato_cab.png",
       "upload": "image"
     },
     "class_type": "LoadImage",
@@ -388,8 +435,8 @@
     "inputs": {
       "text": "",
       "clip": [
-        "11",
-        0
+        "125",
+        1
       ]
     },
     "class_type": "CLIPTextEncode",
@@ -503,7 +550,7 @@
   },
   "192": {
     "inputs": {
-      "noise_seed": 643060642027199
+      "noise_seed": 204087962119284
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -521,9 +568,9 @@
   },
   "194": {
     "inputs": {
-      "scheduler": "normal",
-      "steps": 7,
-      "denoise": 0.8,
+      "scheduler": "karras",
+      "steps": 17,
+      "denoise": 1,
       "model": [
         "294",
         0
@@ -537,7 +584,7 @@
   "195": {
     "inputs": {
       "samples": [
-        "761",
+        "233",
         0
       ],
       "vae": [
@@ -564,6 +611,15 @@
     "class_type": "VAEEncode",
     "_meta": {
       "title": "VAE Encode"
+    }
+  },
+  "212": {
+    "inputs": {
+      "noise_seed": 1050488597094190
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
     }
   },
   "214": {
@@ -695,7 +751,7 @@
   },
   "236": {
     "inputs": {
-      "noise_seed": 345438700546920
+      "noise_seed": 284137673230480
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -862,7 +918,7 @@
         0
       ],
       "mask": [
-        "759",
+        "363",
         0
       ]
     },
@@ -890,8 +946,8 @@
         0
       ],
       "clip": [
-        "11",
-        0
+        "329",
+        1
       ]
     },
     "class_type": "CLIPTextEncode",
@@ -930,7 +986,7 @@
   "299": {
     "inputs": {
       "model": [
-        "12",
+        "329",
         0
       ],
       "conditioning": [
@@ -949,7 +1005,7 @@
       "steps": 28,
       "denoise": 1,
       "model": [
-        "12",
+        "329",
         0
       ]
     },
@@ -969,7 +1025,7 @@
   },
   "303": {
     "inputs": {
-      "noise_seed": 773259974012306
+      "noise_seed": 185893633138177
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -1001,6 +1057,25 @@
     "class_type": "VAEDecode",
     "_meta": {
       "title": "VAE Decode"
+    }
+  },
+  "329": {
+    "inputs": {
+      "lora_name": "cognato_cab.safetensors",
+      "strength_model": 0.35000000000000003,
+      "strength_clip": 1,
+      "model": [
+        "12",
+        0
+      ],
+      "clip": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
     }
   },
   "342": {
@@ -1051,12 +1126,12 @@
         0
       ],
       "pixels": [
-        "707",
+        "467",
         0
       ],
       "mask": [
-        "756",
-        0
+        "468",
+        1
       ]
     },
     "class_type": "InpaintModelConditioning",
@@ -1066,7 +1141,7 @@
   },
   "355": {
     "inputs": {
-      "guidance": 2,
+      "guidance": 5.5,
       "conditioning": [
         "354",
         0
@@ -1089,9 +1164,23 @@
       "title": "Differential Diffusion"
     }
   },
+  "363": {
+    "inputs": {
+      "amount": 15,
+      "device": "auto",
+      "mask": [
+        "285",
+        0
+      ]
+    },
+    "class_type": "MaskBlur+",
+    "_meta": {
+      "title": "🔧 Mask Blur"
+    }
+  },
   "365": {
     "inputs": {
-      "amount": 256,
+      "amount": 192,
       "device": "auto",
       "mask": [
         "267",
@@ -1119,7 +1208,7 @@
   },
   "369": {
     "inputs": {
-      "guidance": 3.5,
+      "guidance": 2,
       "conditioning": [
         "295",
         0
@@ -1221,7 +1310,7 @@
   },
   "379": {
     "inputs": {
-      "seed": 986686442827797,
+      "seed": 236651113574392,
       "steps": 40,
       "cfg": 2,
       "sampler_name": "dpmpp_sde",
@@ -1394,7 +1483,7 @@
   },
   "394": {
     "inputs": {
-      "seed": 827157412127209,
+      "seed": 973349052799759,
       "steps": 3,
       "cfg": 2,
       "sampler_name": "dpmpp_2m",
@@ -1545,6 +1634,136 @@
     "class_type": "Color Blend",
     "_meta": {
       "title": "Color Blend"
+    }
+  },
+  "445": {
+    "inputs": {
+      "noise": [
+        "212",
+        0
+      ],
+      "guider": [
+        "455",
+        0
+      ],
+      "sampler": [
+        "448",
+        0
+      ],
+      "sigmas": [
+        "446",
+        0
+      ],
+      "latent_image": [
+        "453",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "446": {
+    "inputs": {
+      "scheduler": "normal",
+      "steps": 12,
+      "denoise": 1,
+      "model": [
+        "577",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "448": {
+    "inputs": {
+      "sampler_name": "lcm"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "449": {
+    "inputs": {
+      "pixels": [
+        "562",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
+  },
+  "450": {
+    "inputs": {
+      "samples": [
+        "445",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "453": {
+    "inputs": {
+      "samples": [
+        "449",
+        0
+      ],
+      "mask": [
+        "454",
+        0
+      ]
+    },
+    "class_type": "SetLatentNoiseMask",
+    "_meta": {
+      "title": "Set Latent Noise Mask"
+    }
+  },
+  "454": {
+    "inputs": {
+      "amount": 6,
+      "device": "auto",
+      "mask": [
+        "651",
+        1
+      ]
+    },
+    "class_type": "MaskBlur+",
+    "_meta": {
+      "title": "🔧 Mask Blur"
+    }
+  },
+  "455": {
+    "inputs": {
+      "model": [
+        "574",
+        0
+      ],
+      "conditioning": [
+        "26",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "BasicGuider"
     }
   },
   "456": {
@@ -1743,10 +1962,6 @@
       "image": [
         "474",
         0
-      ],
-      "vae": [
-        "10",
-        0
       ]
     },
     "class_type": "ControlNetApplyAdvanced",
@@ -1756,7 +1971,7 @@
   },
   "483": {
     "inputs": {
-      "Text": "A photo of TOK, a woman on the beach holding a can of TOK, labeled Crunchy Bliss sparkling water. A realistic product placement marketing image. Description of the can: a can of Crunchy Bliss sparkling water. The can is aluminum with a purple label covering the can from the top rim to the bottom rim. From top to bottom, the label reads \\\"SPARKLING ADAPTOGENIC WATER\\\" around the white strip at the top rim of the can, then on the blue background: \\\"CRUNCHY\\\", logo, \\\"HYDRATION\\\", then a right-aligned white water drop with the words \"+50 MG\" on top and \"CBD\" below that written in black inside of the water droplet, \\\"BLISS\\\", then stacked on top of each other: \\\"lavender lemon\\\", then \"+50 MG CBD\", then in very small font: \\\"vegan & gluten-free\\\", \\\"12 FL OZ (355 ML)\\\"."
+      "Text": "The image captures a woman in her mid-30s standing in a picturesque Napa Valley vineyard at golden hour. She's holding a single TOK can (labeled as Cognato) in her right hand. The scene is rich with detail and warm, late afternoon light. Detailed size and proportion observations:  TOK can dimensions:  Height: 14.5 cm (5.7 inches) Diameter: 6.3 cm (2.5 inches) Volume: 330 ml (11.2 fl oz)   Woman's proportions:  Height: Approximately 170 cm (5'7\") Hand size: The can's diameter is about 3/4 the width of her palm   Can relative to the woman:  The can's height is roughly the length of her hand from wrist to fingertips It's about 1/12th of her total height The can's diameter is approximately the width of two of her fingers   Environmental size comparisons:  Grape vines: The can is about 1/3 the height of the nearest vine's main stem Wine glasses (on a nearby table): The can is about 3/4 the height of a standard wine glass Grape clusters: The can is about twice the length of a mature grape cluster   Lighting and shadows:  The golden hour sun casts long shadows, with the woman's shadow stretching about 2.5 times her height The can casts a shadow across her hand, accentuating its cylindrical shape   Clothing and accessories:  She wears a flowing sundress that reaches her knees, its hem swaying slightly in the breeze A wide-brimmed sun hat sits atop her head, its diameter about 4 times that of the TOK can   Vineyard details:  Rows of vines stretch into the distance, spaced about 2.5 meters (8 feet) apart Each vine stand is approximately 1.8 meters (6 feet) tall, about 12 times the height of the TOK can   Background elements:  A traditional stone winery building is visible in the mid-distance, its height roughly 40 times that of the TOK can Rolling hills in the background showcase the scale of the valley, with the nearest hill about 500 times taller than the can   Can details:  The label covers about 80% of the can's surface The hot air balloon logo on the can is clearly visible, occupying about 1/4 of the label's height Condensation beads on the can's surface, each droplet about 1-2mm in diameter    The image beautifully contrasts the sleek, modern TOK can against the timeless backdrop of Napa Valley. The woman's relaxed posture and smile suggest a moment of enjoyment, with the can's size emphasizing its convenience and portability in this picturesque setting."
     },
     "class_type": "DF_Text",
     "_meta": {
@@ -1765,7 +1980,7 @@
   },
   "511": {
     "inputs": {
-      "Text": "A photo of TOK, a can of Crunchy Bliss sparkling water. The can is aluminum with a purple label covering the can from the top rim to the bottom rim. From top to bottom, the label reads \\\"SPARKLING ADAPTOGENIC WATER\\\" around the white strip at the top rim of the can, then on the blue background: \\\"CRUNCHY\\\", logo, \\\"HYDRATION\\\", then a right-aligned white water drop with the words \"+50 MG\" on top and \"CBD\" below that written in black inside of the water droplet, \\\"BLISS\\\", then stacked on top of each other: \\\"lavender lemon\\\", then \"+50 MG CBD\", then in very small font: \\\"vegan & gluten-free\\\", \\\"12 FL OZ (355 ML)\\\"."
+      "Text": "A photo of TOK, a white can of Cognato cabernet sauvignon wine. The top of the can reading \"A PRODUCT OF SOUTH AFRICA\" in arching red letters above the hot air balloon logo, below that the hot air balloon logo in black and white (the top of the hot air balloon is shaded black), below that in red lettering: \"DE_ALCOHOLISED WINE\", below that in larger red serif font: \"COGNATO\", below that in small red lettering again \"CABERNET SAUVIGNON\", then below that the fair trade logo, and finally at the bottom a hand-drawn sketch of mountains in black and white in what looks like a graphite pencil sketch. The can is made of aluminum with the pure aluminum color showing at the very top and bottom of the can, but the majority of the can is wrapped in the white label described above."
     },
     "class_type": "DF_Text",
     "_meta": {
@@ -2078,6 +2293,93 @@
       "title": "GroundingDinoSAMSegment (segment anything)"
     }
   },
+  "574": {
+    "inputs": {
+      "lora_name": "cognato_cab.safetensors",
+      "strength_model": 0.93,
+      "strength_clip": 0.9500000000000001,
+      "model": [
+        "12",
+        0
+      ],
+      "clip": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "577": {
+    "inputs": {
+      "model": [
+        "574",
+        0
+      ]
+    },
+    "class_type": "DifferentialDiffusion",
+    "_meta": {
+      "title": "Differential Diffusion"
+    }
+  },
+  "579": {
+    "inputs": {
+      "strength": 1,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "582",
+        0
+      ],
+      "negative": [
+        "581",
+        0
+      ],
+      "control_net": [
+        "132",
+        0
+      ],
+      "image": [
+        "655",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "Apply ControlNet"
+    }
+  },
+  "581": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "574",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "582": {
+    "inputs": {
+      "text": [
+        "511",
+        0
+      ],
+      "clip": [
+        "574",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
   "586": {
     "inputs": {
       "width": [
@@ -2386,6 +2688,21 @@
       "title": "GroundingDinoSAMSegment (segment anything)"
     }
   },
+  "655": {
+    "inputs": {
+      "low_threshold": 50,
+      "high_threshold": 100,
+      "resolution": 768,
+      "image": [
+        "651",
+        0
+      ]
+    },
+    "class_type": "CannyEdgePreprocessor",
+    "_meta": {
+      "title": "Canny Edge"
+    }
+  },
   "658": {
     "inputs": {
       "guidance": 2.5,
@@ -2445,7 +2762,7 @@
   },
   "661": {
     "inputs": {
-      "noise_seed": 48365024989366
+      "noise_seed": 485747507185322
     },
     "class_type": "RandomNoise",
     "_meta": {
@@ -2495,7 +2812,7 @@
   "665": {
     "inputs": {
       "samples": [
-        "738",
+        "445",
         0
       ]
     },
@@ -2517,7 +2834,7 @@
         0
       ],
       "image": [
-        "562",
+        "450",
         0
       ]
     },
@@ -2568,7 +2885,7 @@
   },
   "670": {
     "inputs": {
-      "amount": 188,
+      "amount": 192,
       "device": "auto",
       "mask": [
         "667",
@@ -2647,7 +2964,7 @@
         0
       ],
       "image_b": [
-        "562",
+        "450",
         0
       ],
       "mask": [
@@ -2708,6 +3025,18 @@
       "title": "Preview Image"
     }
   },
+  "697": {
+    "inputs": {
+      "images": [
+        "655",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
   "700": {
     "inputs": {
       "brightness": 1.5,
@@ -2725,9 +3054,9 @@
   },
   "702": {
     "inputs": {
-      "brightness": 0.9500000000000001,
-      "contrast": 0.9500000000000001,
-      "saturation": 0.9500000000000001,
+      "brightness": 0.96,
+      "contrast": 0.87,
+      "saturation": 0.9,
       "image": [
         "342",
         0
@@ -2754,378 +3083,6 @@
     "inputs": {
       "images": [
         "195",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "705": {
-    "inputs": {
-      "samples": [
-        "354",
-        2
-      ],
-      "vae": [
-        "10",
-        0
-      ]
-    },
-    "class_type": "VAEDecode",
-    "_meta": {
-      "title": "VAE Decode"
-    }
-  },
-  "706": {
-    "inputs": {
-      "images": [
-        "705",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "707": {
-    "inputs": {
-      "blend_percentage": 1,
-      "image_a": [
-        "467",
-        0
-      ],
-      "image_b": [
-        "471",
-        0
-      ],
-      "mask": [
-        "708",
-        0
-      ]
-    },
-    "class_type": "Image Blend by Mask",
-    "_meta": {
-      "title": "Image Blend by Mask"
-    }
-  },
-  "708": {
-    "inputs": {
-      "mask": [
-        "468",
-        1
-      ]
-    },
-    "class_type": "MaskToImage",
-    "_meta": {
-      "title": "Convert Mask to Image"
-    }
-  },
-  "711": {
-    "inputs": {
-      "images": [
-        "467",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "712": {
-    "inputs": {
-      "images": [
-        "707",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "717": {
-    "inputs": {
-      "expand": 14,
-      "tapered_corners": false,
-      "mask": [
-        "468",
-        1
-      ]
-    },
-    "class_type": "GrowMask",
-    "_meta": {
-      "title": "GrowMask"
-    }
-  },
-  "721": {
-    "inputs": {
-      "mode": "background",
-      "threshold": 3,
-      "threshold_tolerance": 2,
-      "images": [
-        "471",
-        0
-      ]
-    },
-    "class_type": "Image Remove Background (Alpha)",
-    "_meta": {
-      "title": "Image Remove Background (Alpha)"
-    }
-  },
-  "723": {
-    "inputs": {
-      "mask1": [
-        "717",
-        0
-      ],
-      "mask2": [
-        "728",
-        0
-      ]
-    },
-    "class_type": "SubtractMask",
-    "_meta": {
-      "title": "Pixelwise(MASK - MASK)"
-    }
-  },
-  "724": {
-    "inputs": {
-      "mask": [
-        "723",
-        0
-      ]
-    },
-    "class_type": "PreviewMask_",
-    "_meta": {
-      "title": "Preview Mask ♾️Mixlab"
-    }
-  },
-  "725": {
-    "inputs": {
-      "images": [
-        "721",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "726": {
-    "inputs": {
-      "mask": [
-        "727",
-        0
-      ]
-    },
-    "class_type": "PreviewMask_",
-    "_meta": {
-      "title": "Preview Mask ♾️Mixlab"
-    }
-  },
-  "727": {
-    "inputs": {
-      "channel": "alpha",
-      "image": [
-        "721",
-        0
-      ]
-    },
-    "class_type": "ImageToMask",
-    "_meta": {
-      "title": "Convert Image to Mask"
-    }
-  },
-  "728": {
-    "inputs": {
-      "expand": -6,
-      "tapered_corners": false,
-      "mask": [
-        "727",
-        0
-      ]
-    },
-    "class_type": "GrowMask",
-    "_meta": {
-      "title": "GrowMask"
-    }
-  },
-  "730": {
-    "inputs": {
-      "images": [
-        "647",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "738": {
-    "inputs": {
-      "pixels": [
-        "562",
-        0
-      ],
-      "vae": [
-        "10",
-        0
-      ]
-    },
-    "class_type": "VAEEncode",
-    "_meta": {
-      "title": "VAE Encode"
-    }
-  },
-  "742": {
-    "inputs": {
-      "images": [
-        "562",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "755": {
-    "inputs": {},
-    "class_type": "MaskToImage",
-    "_meta": {
-      "title": "Convert Mask to Image"
-    }
-  },
-  "756": {
-    "inputs": {
-      "kernel_size": 10,
-      "sigma": 2,
-      "mask": [
-        "723",
-        0
-      ]
-    },
-    "class_type": "ImpactGaussianBlurMask",
-    "_meta": {
-      "title": "Gaussian Blur Mask"
-    }
-  },
-  "757": {
-    "inputs": {
-      "mask": [
-        "756",
-        0
-      ]
-    },
-    "class_type": "PreviewMask_",
-    "_meta": {
-      "title": "Preview Mask ♾️Mixlab"
-    }
-  },
-  "758": {
-    "inputs": {
-      "images": [
-        "597",
-        0
-      ]
-    },
-    "class_type": "PreviewImage",
-    "_meta": {
-      "title": "Preview Image"
-    }
-  },
-  "759": {
-    "inputs": {
-      "kernel_size": 50,
-      "sigma": 2,
-      "mask": [
-        "285",
-        0
-      ]
-    },
-    "class_type": "ImpactGaussianBlurMask",
-    "_meta": {
-      "title": "Gaussian Blur Mask"
-    }
-  },
-  "761": {
-    "inputs": {
-      "noise": [
-        "762",
-        0
-      ],
-      "guider": [
-        "229",
-        0
-      ],
-      "sampler": [
-        "234",
-        0
-      ],
-      "sigmas": [
-        "763",
-        0
-      ],
-      "latent_image": [
-        "233",
-        0
-      ]
-    },
-    "class_type": "SamplerCustomAdvanced",
-    "_meta": {
-      "title": "SamplerCustomAdvanced"
-    }
-  },
-  "762": {
-    "inputs": {
-      "noise_seed": 125479478258991
-    },
-    "class_type": "RandomNoise",
-    "_meta": {
-      "title": "RandomNoise"
-    }
-  },
-  "763": {
-    "inputs": {
-      "scheduler": "simple",
-      "steps": 10,
-      "denoise": 0.3,
-      "model": [
-        "361",
-        0
-      ]
-    },
-    "class_type": "BasicScheduler",
-    "_meta": {
-      "title": "BasicScheduler"
-    }
-  },
-  "764": {
-    "inputs": {
-      "samples": [
-        "233",
-        0
-      ],
-      "vae": [
-        "10",
-        0
-      ]
-    },
-    "class_type": "VAEDecode",
-    "_meta": {
-      "title": "VAE Decode"
-    }
-  },
-  "765": {
-    "inputs": {
-      "images": [
-        "764",
         0
       ]
     },

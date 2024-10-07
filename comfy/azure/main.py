@@ -180,9 +180,9 @@ def first_gen(request: FirstGenRequest):
         # workflow_data["698"]["inputs"]["filename_prefix"] = f"{request.gen_id}_{request.seed}_first_gen_2"
 
         # Set the lora
-        workflow_data["125"]["inputs"]["lora_name"] = request.lora_name
-        workflow_data["329"]["inputs"]["lora_name"] = request.lora_name
-        workflow_data["574"]["inputs"]["lora_name"] = request.lora_name
+        # workflow_data["125"]["inputs"]["lora_name"] = request.lora_name
+        # workflow_data["329"]["inputs"]["lora_name"] = request.lora_name
+        # workflow_data["574"]["inputs"]["lora_name"] = request.lora_name
 
         # Set the product description
         workflow_data["511"]["inputs"]["Text"] = request.product_description
@@ -195,7 +195,7 @@ def first_gen(request: FirstGenRequest):
             workflow_data[node_id]["inputs"]["prompt"] = request.detection_prompt
 
         # Set the seed
-        seed_nodes = ["25", "192", "212", "236", "303", "661"]
+        seed_nodes = ["25", "192", "236", "303", "661"]
         for node_id in seed_nodes:
             workflow_data[node_id]["inputs"]["noise_seed"] = request.seed
 
@@ -229,6 +229,7 @@ def first_gen(request: FirstGenRequest):
 @app.post("/simple_gen")
 def simple_gen(request: SimpleGenRequest):
     try:
+        launch_comfyui()
         # Load the workflow template
         workflow_path = WORKFLOWS_DIR / "simple_gen_workflow_api.json"
         workflow_data = json.loads(workflow_path.read_text())
@@ -263,6 +264,8 @@ def simple_gen(request: SimpleGenRequest):
 
         # Encode images as base64
         encoded_images = [base64.b64encode(img).decode('utf-8') for img in image_bytes_list]
+
+        run_comfy_command("comfy stop")
 
         return JSONResponse(content={"images": encoded_images})
 
