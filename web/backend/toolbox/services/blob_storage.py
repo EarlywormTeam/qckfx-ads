@@ -57,7 +57,7 @@ class BlobStorageService:
     def get_container_name(self, key: ContainerName) -> str:
         return key.value
 
-    async def generate_container_sas(self, container_name: ContainerName = None, expiry_hours: int = 1, permission: ContainerSasPermissions = ContainerSasPermissions.READ):
+    async def generate_container_sas(self, container_name: ContainerName = None, expiry_hours: int = 1, permission: ContainerSasPermissions = ContainerSasPermissions.read):
         if container_name is None:
             container_name = self.default_container
         

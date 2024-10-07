@@ -85,7 +85,7 @@ async def create_upload_url(
     toolbox = request.state.toolbox
     blob_service = toolbox.blob_storage_service
 
-    upload_url = await blob_service.generate_container_sas(container_name=blob_service.ContainerName.UPLOADS, permission=ContainerSasPermissions.WRITE)
+    upload_url = await blob_service.generate_container_sas(container_name=blob_service.ContainerName.UPLOADS, permission=ContainerSasPermissions.write)
 
     return {"upload_url": upload_url}
 
@@ -98,9 +98,9 @@ async def get_user_organizations(request: Request, session: dict = Depends(verif
     user = await User.get(user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+        
     # Fetch organization memberships for the user
-    memberships = await OrganizationMembership.find(OrganizationMembership.user_id == str(user.id)).to_list()
+    memberships = await OrganizationMembership.find(OrganizationMembership.user_id == PydanticObjectId(user.id)).to_list()
     
     # Fetch organizations based on the memberships
     organization_ids = [membership.organization_id for membership in memberships]
@@ -355,19 +355,36 @@ else:
     print(f"Directory already exists: {assets_dir}")
 
 
-@app.get("/auth")
-async def auth(request: Request):
-    # Get the base URL from the request
+@app.get("/api/auth/sign_in")
+async def auth_sign_in(request: Request):
     base_url = str(request.base_url).rstrip('/')
     redirect_uri = f"{base_url}/api/hooks/workos"
-    print(redirect_uri)
-
+    
     authorization_url = workos_client.user_management.get_authorization_url(
         provider="authkit",
         redirect_uri=redirect_uri
     )
 
     return RedirectResponse(url=authorization_url)
+
+import httpx
+
+@app.post("/api/auth/sign_out")
+async def auth_sign_out(request: Request, session: dict = Depends(verify_session)):
+    # Get the WorkOS logout URL
+    logout_url = workos_client.user_management.get_logout_url(session["session_id"])
+    
+    # Make a GET request to the WorkOS logout URL
+    async with httpx.AsyncClient() as client:
+        await client.get(logout_url)
+    
+    # Create a response that redirects to the root path
+    response = RedirectResponse(url="/", status_code=303)
+    
+    # Delete the session cookie
+    response.delete_cookie(key="session")
+    
+    return response
 
 @app.get("/api/auth/status")
 async def auth_status(request: Request, session: dict = Depends(verify_session)):
