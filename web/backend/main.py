@@ -25,7 +25,7 @@ from background_jobs.refine_product_image.background_refine_product_image import
 from background_jobs.train_product_lora import train_product_lora
 import background_jobs.background_io_thread as background_io_thread
 from toolbox import Toolbox
-
+from azure.storage.blob import ContainerSasPermissions
 load_dotenv()
 
 REDIRECT_URI = os.getenv("WORKOS_REDIRECT_URI", "http://qckfx.com/api/hooks/workos")
@@ -55,6 +55,39 @@ app.add_middleware(ToolboxMiddleware)
 @app.on_event("startup")
 async def startup_event():
     await init_beanie_models()
+
+
+##################################
+# DAM
+##################################
+
+# Gets scoped sas for image upload
+from azure.storage.blob import generate_blob_sas, BlobSasPermissions
+
+@app.get("/api/organizations/{organization_id}/upload-urls")
+async def create_upload_url(
+    organization_id: str,
+    request: Request,
+    session: dict = Depends(verify_session)
+):
+    user_id = session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    # Verify the user belongs to the organization
+    membership = await OrganizationMembership.find_one(
+        OrganizationMembership.user_id == user_id,
+        OrganizationMembership.organization_id == PydanticObjectId(organization_id)
+    )
+    if not membership:
+        raise HTTPException(status_code=403, detail="User does not belong to this organization")
+
+    toolbox = request.state.toolbox
+    blob_service = toolbox.blob_storage_service
+
+    upload_url = await blob_service.generate_container_sas(container_name=blob_service.ContainerName.UPLOADS, permission=ContainerSasPermissions.WRITE)
+
+    return {"upload_url": upload_url}
 
 @app.get("/api/user/organization")
 async def get_user_organizations(request: Request, session: dict = Depends(verify_session)):
