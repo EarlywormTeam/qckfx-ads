@@ -2,7 +2,7 @@ import asyncio
 from io import BytesIO
 from PIL import Image
 from toolbox.services.image import ImageService
-from toolbox.services.blob_storage import BlobStorageService, ContainerName
+from toolbox.services.blob_storage import BlobStorageService
 from toolbox.services.flags import FeatureFlags
 
 def get_resampling_filter():
@@ -49,10 +49,10 @@ async def strip_background_and_resize(image_url: str, filename: str):
             buffer.seek(0)
 
         # Upload the processed and resized image to blob storage
-        blob_name = await blob_storage_service.upload_blob(filename, buffer.getvalue(), ContainerName.IMAGES)
+        blob_name = await blob_storage_service.upload_blob(filename, buffer.getvalue(), BlobStorageService.ContainerName.IMAGES)
         
         # Get the blob URL
-        blob_url = await blob_storage_service.get_blob_url(blob_name, ContainerName.IMAGES)
+        blob_url = await blob_storage_service.get_blob_url(blob_name, BlobStorageService.ContainerName.IMAGES)
         
         return buffer.getvalue(), blob_url
     except Exception as e:

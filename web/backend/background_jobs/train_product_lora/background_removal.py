@@ -1,6 +1,6 @@
 from models.product import Product
 from toolbox import Toolbox
-from toolbox.services.blob_storage import ContainerName
+from toolbox.services.blob_storage import BlobStorageService
 
 async def remove_background(toolbox: Toolbox, product: Product) -> str:
     blob_service = toolbox.services.blob_storage
@@ -14,10 +14,10 @@ async def remove_background(toolbox: Toolbox, product: Product) -> str:
 
         # Upload the background-removed image to blob storage
         blob_name = f"background_removed_{product.id}.png"
-        new_blob_id = await blob_service.upload_blob_from_url(blob_name, result_url, ContainerName.IMAGES)
+        new_blob_id = await blob_service.upload_blob_from_url(blob_name, result_url, BlobStorageService.ContainerName.IMAGES)
 
         # Update the product with the new background-removed image blob ID and URL
-        new_blob_url = await blob_service.get_blob_url(new_blob_id, ContainerName.IMAGES)
+        new_blob_url = await blob_service.get_blob_url(new_blob_id, BlobStorageService.ContainerName.IMAGES)
         await product.set_background_removed_image(new_blob_id, new_blob_url)
 
         return new_blob_id

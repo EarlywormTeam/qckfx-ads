@@ -26,6 +26,8 @@ from background_jobs.train_product_lora import train_product_lora
 import background_jobs.background_io_thread as background_io_thread
 from toolbox import Toolbox
 from azure.storage.blob import ContainerSasPermissions
+
+from toolbox.services.blob_storage import BlobStorageService
 load_dotenv()
 
 REDIRECT_URI = os.getenv("WORKOS_REDIRECT_URI", "http://qckfx.com/api/hooks/workos")
@@ -76,16 +78,19 @@ async def create_upload_url(
 
     # Verify the user belongs to the organization
     membership = await OrganizationMembership.find_one(
-        OrganizationMembership.user_id == user_id,
+        OrganizationMembership.user_id == PydanticObjectId(user_id),
         OrganizationMembership.organization_id == PydanticObjectId(organization_id)
     )
     if not membership:
         raise HTTPException(status_code=403, detail="User does not belong to this organization")
 
-    toolbox = request.state.toolbox
-    blob_service = toolbox.blob_storage_service
+    toolbox: Toolbox = request.state.toolbox 
+    blob_service = toolbox.services.blob_storage
 
-    upload_url = await blob_service.generate_container_sas(container_name=blob_service.ContainerName.UPLOADS, permission=ContainerSasPermissions.write)
+    upload_url = await blob_service.generate_container_sas(
+        container_name=BlobStorageService.ContainerName.UPLOADS,
+        permission=ContainerSasPermissions(write=True)
+    )
 
     return {"upload_url": upload_url}
 

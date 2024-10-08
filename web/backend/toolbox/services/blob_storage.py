@@ -9,18 +9,18 @@ load_dotenv()
 
 connection_string = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
 
-class ContainerName(Enum):
-    IMAGES = "images"
-    UPLOADS = "uploads"
-    VERSIONS = "versions"
-    PROCESSED = "processed"
-    # Add other container names as needed
-    # e.g., DOCUMENTS = "documents"
-
 class BlobStorageService:
+    class ContainerName(Enum):
+        IMAGES = "images"
+        UPLOADS = "uploads"
+        VERSIONS = "versions"
+        PROCESSED = "processed"
+        # Add other container names as needed
+        # e.g., DOCUMENTS = "documents"
+
     def __init__(self):
         self.client = BlobServiceClient.from_connection_string(connection_string)
-        self.default_container = ContainerName.IMAGES
+        self.default_container = self.ContainerName.IMAGES
 
     def get_blob_client(self, blob_name, container_name: ContainerName = None):
         if container_name is None:
@@ -57,12 +57,14 @@ class BlobStorageService:
     def get_container_name(self, key: ContainerName) -> str:
         return key.value
 
-    async def generate_container_sas(self, container_name: ContainerName = None, expiry_hours: int = 1, permission: ContainerSasPermissions = ContainerSasPermissions.read):
+    async def generate_container_sas(self, container_name: ContainerName = None, expiry_hours: int = 1, permission: ContainerSasPermissions = ContainerSasPermissions(read=True)):
         if container_name is None:
             container_name = self.default_container
         
         # Get the account name from the connection string
         account_name = self.client.account_name
+
+        print('permission', permission)
 
         # Generate SAS token
         sas_token = generate_container_sas(
