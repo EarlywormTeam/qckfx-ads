@@ -1,7 +1,7 @@
 import asyncio
 from io import BytesIO
 from PIL import Image
-from toolbox.services.image import ImageService
+from web.backend.toolbox.services.image.image import ImageService
 from toolbox.services.blob_storage import BlobStorageService
 from toolbox.services.flags import FeatureFlags
 

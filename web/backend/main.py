@@ -8,7 +8,7 @@ import time
 from beanie import PydanticObjectId
 from beanie.operators import In
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Request, HTTPException
+from fastapi import Body, Depends, FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -23,6 +23,7 @@ from middleware.session import SessionMiddleware
 from background_jobs.generate_product_image.background_generate_product_image import background_generate_product_image
 from background_jobs.refine_product_image.background_refine_product_image import background_refine_product_image
 from background_jobs.train_product_lora import train_product_lora
+from background_jobs.index_uploads import index_uploaded_images
 import background_jobs.background_io_thread as background_io_thread
 from toolbox import Toolbox
 from azure.storage.blob import ContainerSasPermissions
@@ -64,9 +65,7 @@ async def startup_event():
 ##################################
 
 # Gets scoped sas for image upload
-from azure.storage.blob import generate_blob_sas, BlobSasPermissions
-
-@app.get("/api/organizations/{organization_id}/upload-urls")
+@app.get("/api/organizations/{organization_id}/upload-url")
 async def create_upload_url(
     organization_id: str,
     request: Request,
@@ -93,6 +92,41 @@ async def create_upload_url(
     )
 
     return {"upload_url": upload_url}
+
+@app.post("/api/organizations/{organization_id}/uploaded-files")
+async def notify_uploaded_files(
+    organization_id: str,
+    request: Request,
+    uploaded_files: List[str] = Body(..., embed=True),
+    session: dict = Depends(verify_session)
+):
+    user_id = session.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User not authenticated")
+
+    # Verify the user belongs to the organization
+    membership = await OrganizationMembership.find_one(
+        OrganizationMembership.user_id == PydanticObjectId(user_id),
+        OrganizationMembership.organization_id == PydanticObjectId(organization_id)
+    )
+    if not membership:
+        raise HTTPException(status_code=403, detail="User does not belong to this organization")
+
+    # Schedule the indexing task on the background I/O thread
+    asyncio.create_task(
+        background_io_thread.run_async_task(
+            index_uploaded_images,
+            PydanticObjectId(organization_id),
+            PydanticObjectId(user_id),
+            uploaded_files
+        )
+    )
+
+    # Log the start of the indexing process
+    print(f"Started indexing {len(uploaded_files)} images for organization {organization_id}")
+
+    return {"message": f"Successfully queued processing of {len(uploaded_files)} uploaded files"}
+
 
 @app.get("/api/user/organization")
 async def get_user_organizations(request: Request, session: dict = Depends(verify_session)):

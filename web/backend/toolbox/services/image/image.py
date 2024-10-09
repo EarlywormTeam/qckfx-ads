@@ -1,12 +1,14 @@
 import os
 import asyncio
 from typing import Optional
+from beanie import PydanticObjectId
 from dotenv import load_dotenv
 import replicate
 import fal_client
 import httpx
 from toolbox.services.flags import FeatureFlags
 from toolbox.services.comfy import ComfyService
+from .process_image_for_search import process_image_for_search, ImageSearchMetadata
 
 class ImageService:
     def __init__(self, flags: FeatureFlags):
@@ -76,6 +78,25 @@ class ImageService:
             return processed_result
         except Exception as e:
             raise Exception(f"Error in model fine-tuning: {str(e)}")
+        
+    async def process_image_for_search(self, image_data: bytes, organization_id: PydanticObjectId) -> ImageSearchMetadata:
+        """
+        Process an image for search indexing.
+
+        Args:
+            image_data (bytes): The image data to process.
+
+        Returns:
+            ImageSearchMetadata: An object containing the processed image information.
+
+        Raises:
+            Exception: If there's an error during image processing.
+        """
+        try:
+            result = await process_image_for_search(image_data, organization_id)
+            return result
+        except Exception as e:
+            raise Exception(f"Error in processing image for search: {str(e)}")
 
     async def generate_images(self, prompt: str, count: int, product_id: str, gen_id: str, lora_name: str, product_description: str, trigger_word: str, detection_prompt: str) -> list:
         """

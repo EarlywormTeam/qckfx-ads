@@ -15,6 +15,7 @@ class BlobStorageService:
         UPLOADS = "uploads"
         VERSIONS = "versions"
         PROCESSED = "processed"
+        FACES = "faces"
         # Add other container names as needed
         # e.g., DOCUMENTS = "documents"
 
