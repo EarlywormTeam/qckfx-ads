@@ -1,28 +1,22 @@
 import { Outlet } from 'react-router-dom';
 import Header from '../components/header/Header';
-
-type Organization = {
-  id: string;
-  name: string;
-};
+import { Organization } from '@/types/organization';
 
 interface RootLayoutProps {
   organizations: Organization[];
-  selectedOrg: Organization | null;
-  setSelectedOrg: (org: Organization | null) => void;
 }
 
-const RootLayout: React.FC<RootLayoutProps> = ({ organizations, selectedOrg, setSelectedOrg }) => {
+const RootLayout: React.FC<RootLayoutProps> = ({ organizations }) => {
   return (
     <div className="flex flex-col h-full w-full">
       <Header
         organizations={organizations}
-        selectedOrg={selectedOrg}
-        setSelectedOrg={setSelectedOrg}
       />
-      <main className="flex-grow">
-        <Outlet />
-      </main>
+      <div className="flex-grow overflow-hidden">
+        <main className="h-full overflow-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import { z } from 'zod';
 import { camelizeKeys, decamelizeKeys } from 'humps';
 import { APIError, APIErrorSchema } from '@/types/apiError';
@@ -14,10 +14,15 @@ export default class BaseAPI {
     method: string, 
     endpoint: string, 
     data?: Record<string, unknown>, 
-    responseType: 'json' | 'blob' = 'json'
+    options: {
+      responseType?: 'json' | 'blob',
+      signal?: AbortSignal
+    } = {}
   ): Promise<unknown> {
+    const { responseType = 'json', signal } = options;
+    
     try {
-      const response = await axios({
+      const config: AxiosRequestConfig = {
         method,
         url: `${this.baseURL}${endpoint}`,
         data: data ? decamelizeKeys(data) : undefined,
@@ -25,8 +30,12 @@ export default class BaseAPI {
           'Content-Type': 'application/json',
         },
         responseType,
+        withCredentials: true,
         validateStatus: (status) => status >= 200 && status < 300,
-      });
+        signal,
+      };
+
+      const response = await axios(config);
       
       if (responseType === 'blob') {
         return response.data;
@@ -34,8 +43,11 @@ export default class BaseAPI {
       
       return camelizeKeys(response.data);
     } catch (error) {
-      console.log(error)
       if (axios.isAxiosError(error)) {
+        if (error.name === 'CanceledError') {
+          // Request was canceled
+          throw error;
+        }
         throw new APIError(
           error.response?.data?.message || `Request failed with status ${error.response?.status}`,
           error.response?.status

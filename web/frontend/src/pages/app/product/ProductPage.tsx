@@ -10,15 +10,11 @@ import { Trash2, RefreshCw, Maximize2, ChevronLeft, ChevronRight, Lightbulb, Inf
 import { ImageGroup, GeneratedImage } from '@/types/generatedImage';
 import { useProductAPI } from '@/api/product';
 import { saveAs } from 'file-saver';
+import { useOrganization } from '@/hooks/organization/useOrganization';
 
-import { Organization } from '@/types/organization';
-
-interface ProductPageProps {
-  selectedOrg: Organization | null;
-}
-
-const ProductPage: React.FC<ProductPageProps> = ({ selectedOrg }) => {
+const ProductPage: React.FC = () => {
   const location = useLocation();
+  const { organization } = useOrganization();
   const [product, /*setProduct*/] = useState<Product | null>(location.state?.product || null);
   const [loading, /*setLoading*/] = useState<boolean>(false);
   const [prompt, setPrompt] = useState<string>('');
@@ -299,7 +295,7 @@ const ProductPage: React.FC<ProductPageProps> = ({ selectedOrg }) => {
     "Macarons in a rainbow of colors"
   ];
 
-  const samplePrompts = selectedOrg?.id === '66f468fecda608ea30c23f6d' ? sampleChePrompts : sampleCrunchyPrompts;
+  const samplePrompts = organization?.id === '66f468fecda608ea30c23f6d' ? sampleChePrompts : sampleCrunchyPrompts;
 
   const getMostRecentImage = (group: ImageGroup): GeneratedImage | undefined => {
     return group.images

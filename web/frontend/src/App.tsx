@@ -12,6 +12,11 @@ import { APIProvider } from './api/APIProvider';
 import { API } from './api';
 import { Organization } from '@/types/organization';
 import { useAuth } from '@/hooks/useAuth';
+import SearchResults from './pages/app/search/SearchResults';
+import ImageEditor from './components/ImageEditor';
+import { OrganizationProvider } from './hooks/organization/OrganizationProvider';
+import { ProductProvider } from './hooks/product/ProductProvider';
+import GenerateVideo from './pages/app/generateVideo/GenerateVideo';
 
 function App() {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -55,34 +60,51 @@ function App() {
     <ErrorBoundary>
       <APIProvider api={new API()}>
         <BrowserRouter>
-          <Routes>
-            <Route element={
-              <RootLayout
-                organizations={organizations}
-                selectedOrg={selectedOrg}
-                setSelectedOrg={setSelectedOrg}
-              />
-            }>
-              <Route path="/" element={isAuthenticated ? <Navigate to="/app" replace /> : <LandingPage />} />
-              <Route path="/app" element={
-                <ProtectedRoute>
-                  <HomePage selectedOrg={selectedOrg} />
-                </ProtectedRoute>
-              } />
-              <Route path="/app/product/:productName" element={
-                <ProtectedRoute>
-                  <ProductPage selectedOrg={selectedOrg} />
-                </ProtectedRoute>
-              } />
-              <Route path="/app/product/create" element={
-                <ProtectedRoute>
-                  <CreateProductPage />
-                </ProtectedRoute>
-              } />
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-          <Toaster />
+          <OrganizationProvider>
+            <ProductProvider>
+              <Routes>
+                <Route element={
+                  <RootLayout
+                    organizations={organizations}
+                  />
+                }>
+                  <Route path="/" element={isAuthenticated ? <Navigate to="/app" replace /> : <LandingPage />} />
+                  <Route path="/app" element={
+                    <ProtectedRoute>
+                      <HomePage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app/product/:productName" element={
+                    <ProtectedRoute>
+                      <ProductPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app/product/create" element={
+                    <ProtectedRoute>
+                      <CreateProductPage />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app/search" element={
+                    <ProtectedRoute>
+                      <SearchResults />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app/generate/video" element={
+                    <ProtectedRoute>
+                      <GenerateVideo />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/app/editor/:imageId" element={
+                    <ProtectedRoute>
+                      <ImageEditor />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="*" element={<NotFound />} />
+                </Route>
+              </Routes>
+              <Toaster />
+            </ProductProvider>
+          </OrganizationProvider>
         </BrowserRouter>
       </APIProvider>
     </ErrorBoundary>

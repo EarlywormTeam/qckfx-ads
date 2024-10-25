@@ -12,13 +12,15 @@ from fastapi import Body, Depends, FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
+import requests
 from workos import AsyncWorkOSClient
 import io
 from starlette.middleware.base import BaseHTTPMiddleware
 from urllib.parse import urlparse
 
-from api.response_types.product import ProductResponse, ProductsListResponse
-from models import GenerationJob, GeneratedImage, GeneratedImageGroup, Organization, OrganizationMembership, Product, User, init_beanie_models, WaitlistEntry
+from api.request_types import ImageSearchRequest
+from api.response_types import ImageSearchResponse, ProductResponse, ProductsListResponse, ImageResponseModel
+from models import GenerationJob, GeneratedImage, GeneratedImageGroup, Organization, OrganizationMembership, Product, User, init_beanie_models, WaitlistEntry, Image, Color
 from middleware.session import SessionMiddleware
 from background_jobs.generate_product_image.background_generate_product_image import background_generate_product_image
 from background_jobs.refine_product_image.background_refine_product_image import background_refine_product_image
@@ -26,9 +28,11 @@ from background_jobs.train_product_lora import train_product_lora
 from background_jobs.index_uploads import index_uploaded_images
 import background_jobs.background_io_thread as background_io_thread
 from toolbox import Toolbox
-from azure.storage.blob import ContainerSasPermissions
+from azure.storage.blob import ContainerSasPermissions, BlobSasPermissions
 
 from toolbox.services.blob_storage import BlobStorageService
+from controllers.image_search import perform_image_search
+from api.response_types.avatar import AvatarListResponse, AvatarResponse, AvatarPreviewImage
 load_dotenv()
 
 REDIRECT_URI = os.getenv("WORKOS_REDIRECT_URI", "http://qckfx.com/api/hooks/workos")
@@ -63,6 +67,33 @@ async def startup_event():
 ##################################
 # DAM
 ##################################
+
+@app.get("/api/image/{image_id}", response_model=ImageResponseModel)
+async def get_image_by_id(image_id: str, request: Request):
+    toolbox: Toolbox = request.state.toolbox 
+    image = (await Image.get(image_id)).model_dump(by_alias=True)
+
+    blob_service = toolbox.services.blob_storage
+    sas_url = await blob_service.generate_blob_sas(
+            blob_name=image["file_path"],
+            container_name=BlobStorageService.ContainerName.PROCESSED,
+            expiry_mins=15,  # Token expires in 15 minutes
+            permission=BlobSasPermissions(read=True)
+        )
+    image["url"] = sas_url
+    
+    if not image:
+        raise HTTPException(status_code=404, detail="Image not found")
+    return image
+
+@app.post("/api/{organization_id}/image/search", response_model=ImageSearchResponse)
+async def search_images(
+    organization_id: str,
+    request: Request,
+    image_search_request: ImageSearchRequest = Body(...),
+    session: dict = Depends(verify_session)
+):
+    return await perform_image_search(organization_id, request, image_search_request, request.state.toolbox)
 
 # Gets scoped sas for image upload
 @app.get("/api/organizations/{organization_id}/upload-url")
@@ -224,6 +255,50 @@ async def create_product(request: CreateProductRequest, session: dict = Depends(
     background_io_thread.run_async_task(train_product_lora, product)
     
     return {"product": product}
+
+##################################
+# Video Generation
+##################################
+
+@app.get("/api/organization/{organization_id}/avatar", response_model=AvatarListResponse)
+async def get_avatars(organization_id: str, session: dict = Depends(verify_session)):
+    organization = await Organization.get(organization_id)
+    if not organization:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    
+    url = "https://api.creatify.ai/api/personas/"
+
+    headers = {
+        "X-API-ID": os.getenv("CREATIFY_API_ID"),
+        "X-API-KEY": os.getenv("CREATIFY_API_KEY")
+    }
+
+    response = requests.request("GET", url, headers=headers)
+    if response.status_code != 200:
+        print("Failed to fetch avatars from Creatify API", response.text)
+        raise HTTPException(status_code=response.status_code, detail="Failed to fetch avatars from Creatify API")
+    
+    avatars_data = response.json()
+    print("Fetched avatars from Creatify API", avatars_data)
+    avatar_responses = []
+    for avatar in avatars_data:
+        avatar_response = AvatarResponse(
+            id=avatar["id"],
+            name=avatar.get("creator_name", ""),
+            gender=avatar["gender"],
+            preview_images=AvatarPreviewImage(
+                preview_image_16_9=avatar.get("preview_image_16_9"),
+                preview_image_1_1=avatar.get("preview_image_1_1"),
+                preview_image_9_16=avatar.get("preview_image_9_16")
+            )
+        )
+        avatar_responses.append(avatar_response)
+    
+    return AvatarListResponse(avatars=avatar_responses)
+    
+##################################
+# Image Generation
+##################################
 
 class GenerateProductImageRequest(BaseModel):
     prompt: str

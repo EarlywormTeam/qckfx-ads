@@ -2,7 +2,7 @@ import os
 from enum import Enum
 from azure.storage.blob.aio import BlobServiceClient
 from dotenv import load_dotenv
-from azure.storage.blob import generate_container_sas, ContainerSasPermissions
+from azure.storage.blob import generate_container_sas, ContainerSasPermissions, BlobSasPermissions, generate_blob_sas
 from datetime import datetime, timedelta
 
 load_dotenv()
@@ -57,6 +57,28 @@ class BlobStorageService:
 
     def get_container_name(self, key: ContainerName) -> str:
         return key.value
+    
+    async def generate_blob_sas(self, blob_name, container_name: ContainerName = None, expiry_mins: int = 15, permission: BlobSasPermissions = BlobSasPermissions(read=True)):
+        if container_name is None:
+            container_name = self.default_container
+        
+        # Get the account name from the connection string
+        account_name = self.client.account_name
+
+        # Generate SAS token
+        sas_token = generate_blob_sas(
+            account_name=account_name,
+            container_name=container_name.value,
+            blob_name=blob_name,
+            account_key=self.client.credential.account_key,
+            permission=permission,
+            expiry=datetime.utcnow() + timedelta(minutes=expiry_mins)
+        )
+
+        # Construct the full URL with SAS token
+        blob_url = f"{self.client.url}{container_name.value}/{blob_name}"
+        blob_url_with_sas = f"{blob_url}?{sas_token}"
+        return blob_url_with_sas
 
     async def generate_container_sas(self, container_name: ContainerName = None, expiry_hours: int = 1, permission: ContainerSasPermissions = ContainerSasPermissions(read=True)):
         if container_name is None:

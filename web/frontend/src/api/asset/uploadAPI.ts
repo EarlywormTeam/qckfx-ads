@@ -7,7 +7,7 @@ import BaseAPI from '../base';
 
 export default class UploadAPI extends BaseAPI {
   async getUploadUrl(organizationId: string): Promise<string> {
-    const response = await this.request('GET', `/organizations/${organizationId}/upload-urls`);
+    const response = await this.request('GET', `/organizations/${organizationId}/upload-url`);
     const result = this.handleResponse(response, z.object({
       uploadUrl: z.string(),
     }));
@@ -80,5 +80,14 @@ export default class UploadAPI extends BaseAPI {
     return files.map((file, index) =>
       this.uploadFile(file, uploadUrl, organizationId, onProgress ? onProgress[index] : undefined)
     );
+  }
+
+  async notifyUploadedFiles(
+    organizationId: string,
+    fileNames: string[]
+  ): Promise<void> {
+    await this.request('POST', `/organizations/${organizationId}/uploaded-files`, {
+      uploadedFiles: fileNames
+    });
   }
 }

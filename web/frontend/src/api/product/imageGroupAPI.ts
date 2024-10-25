@@ -19,7 +19,7 @@ export default class ImageGroupAPI extends BaseAPI {
   }
 
   async downloadImage(imageId: string): Promise<Blob> {
-    const response = await this.request('GET', `/image/${imageId}/download`, undefined, 'blob');
+    const response = await this.request('GET', `/image/${imageId}/download`, { responseType: 'blob' });
     return response as Blob;
   }
 }

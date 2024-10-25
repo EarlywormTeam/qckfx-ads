@@ -9,16 +9,17 @@ import { Plus } from "lucide-react";
 import { useAssetAPI } from '@/api/asset';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import SearchBar from './SearchBar';
+import { useOrganization } from '@/hooks/organization/useOrganization';
 
 interface HeaderProps {
   organizations: Organization[];
-  selectedOrg: Organization | null;
-  setSelectedOrg: (org: Organization | null) => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ organizations, selectedOrg, setSelectedOrg }) => {
+const Header: React.FC<HeaderProps> = ({ organizations }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { organization, setOrganization } = useOrganization();
   const isLandingPage = location.pathname === '/';
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
@@ -37,8 +38,8 @@ const Header: React.FC<HeaderProps> = ({ organizations, selectedOrg, setSelected
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    console.log('Uploading files:', files, selectedOrg);
-    if (files && selectedOrg) {
+    console.log('Uploading files:', files, organization);
+    if (files && organization) {
       const allowedFormats = ['image/png', 'image/jpeg', 'image/webp'];
       const filteredFiles = Array.from(files).filter(file => allowedFormats.includes(file.type));
 
@@ -53,6 +54,7 @@ const Header: React.FC<HeaderProps> = ({ organizations, selectedOrg, setSelected
       }
 
       let uploadToastId: string | undefined;
+      let uploadPromises: Promise<{ fileName: string; progress: number }>[] = [];
       try {
         const { id } = toast({
           title: "Uploading Files",
@@ -93,7 +95,7 @@ const Header: React.FC<HeaderProps> = ({ organizations, selectedOrg, setSelected
         });
 
         // Start uploading files with progress callbacks
-        const uploadPromises = await assetAPI.uploadFiles(filteredFiles, selectedOrg.id, progressCallbacks);
+        uploadPromises = await assetAPI.uploadFiles(filteredFiles, organization.id, progressCallbacks);
 
         // Handle upload results
         await Promise.all(uploadPromises.map(async (promise, index) => {
@@ -154,6 +156,24 @@ const Header: React.FC<HeaderProps> = ({ organizations, selectedOrg, setSelected
         if (folderInputRef.current) {
           folderInputRef.current.value = '';
         }
+
+        // Notify the server about the uploaded files
+        try {
+          const uploadedFileNames = await Promise.all(
+            uploadPromises.map(async (promise) => {
+              const result = await promise;
+              return result.fileName;
+            })
+          );
+          await assetAPI.notifyUploadedFiles(organization.id, uploadedFileNames);
+        } catch (error) {
+          console.error('Error notifying server about uploaded files:', error);
+          toast({
+            title: "Upload Error",
+            description: "Failed to upload files.",
+            variant: "destructive",
+          });
+        }
       }
     }
   };
@@ -173,16 +193,25 @@ const Header: React.FC<HeaderProps> = ({ organizations, selectedOrg, setSelected
     if (value === "sign-out") {
       handleSignOut();
     } else {
-      setSelectedOrg(organizations.find(org => org.id === value) || null);
+      setOrganization(organizations.find(org => org.id === value) || null);
     }
   };
 
+  const handleGenerateVideo = () => {
+    navigate('/app/generate/video');
+  };
+
   return (
-    <header className={`flex justify-between items-center p-6 ${isLandingPage ? 'bg-transparent' : 'bg-background-white'}`}>
+    <header className={`flex justify-between items-start px-4 py-2 ${isLandingPage ? 'bg-transparent' : 'bg-background-white'}`}>
       <div onClick={handleLogoClick} className="cursor-pointer">
         <Logo />
       </div>
-      <div className="flex items-center space-x-4">
+      {isAuthenticated && !isLandingPage && (
+        <div className="flex-grow px-8 mt-1">
+          <SearchBar />
+        </div>
+      )}
+      <div className="flex items-start space-x-4 mt-1">
         {isAuthenticated && !isLandingPage && (
           <>
             <input
@@ -209,24 +238,27 @@ const Header: React.FC<HeaderProps> = ({ organizations, selectedOrg, setSelected
               <DropdownMenuContent>
                 <DropdownMenuItem onClick={() => handleUploadClick(false)}>Upload File</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleUploadClick(true)}>Upload Folder</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleGenerateVideo}>Generate Video</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Select 
-              value={selectedOrg?.id} 
-              onValueChange={handleOrganizationChange}
-            >
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Select organization" />
-              </SelectTrigger>
-              <SelectContent>
-                {organizations.map((org) => (
-                  <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
-                ))}
-                <SelectItem value="sign-out" className="text-red-500">
-                  Sign Out
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center space-x-4">
+              <Select 
+                value={organization?.id} 
+                onValueChange={handleOrganizationChange}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select organization" />
+                </SelectTrigger>
+                <SelectContent>
+                  {organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                  ))}
+                  <SelectItem value="sign-out" className="text-red-500">
+                    Sign Out
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </>
         )}
         {(isLandingPage || !isAuthenticated) && !isLoading ? (

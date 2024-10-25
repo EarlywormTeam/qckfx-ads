@@ -1,49 +1,9 @@
-import React, { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import ProductList from './ProductList';
-// import { Button } from "@/components/ui/button";
-import { useAPI } from '@/api';
-import { Product } from '@/types/product';
-import { Organization } from '@/types/organization';
+import { useProducts } from '@/hooks/product/useProducts';
 
-// Remove the Organization type definition from here
-
-interface HomePageProps {
-  selectedOrg: Organization | null;
-}
-
-const HomePage: React.FC<HomePageProps> = ({ selectedOrg }) => {
-  // const navigate = useNavigate();
-  const api = useAPI();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      if (!selectedOrg) {
-        setProducts([]);
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const productAPI = api.createProductAPI();
-        const fetchedProducts = await productAPI.getProducts(selectedOrg.id);
-        setProducts(fetchedProducts);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, [api, selectedOrg]); // Add selectedOrg to the dependency array
-
-  // const handleCreateProduct = () => {
-  //   navigate('/app/product/create');
-  // };
+const HomePage: React.FC = () => {
+  const { products, loading } = useProducts();
 
   return (
     <div className="h-full w-full bg-background-white">

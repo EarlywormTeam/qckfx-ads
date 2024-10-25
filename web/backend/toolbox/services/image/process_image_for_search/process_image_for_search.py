@@ -59,7 +59,7 @@ async def process_image_for_search(image_data: bytes, organization_id: PydanticO
     image_format = basic_details.file_type.lower()
 
     # Extract dominant colors
-    dominant_colors_task = background_thread_queue.submit(extract_dominant_colors, image_data)
+    dominant_colors_task = extract_dominant_colors(image_data=image_data, organization_id=organization_id)
 
     # Extract facial details
     facial_details_task = background_thread_queue.submit(extract_facial_details, image_data)

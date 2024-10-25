@@ -4,8 +4,8 @@ from beanie import Document, Link
 from pydantic import BaseModel, Field
 
 class DominantColor(BaseModel):
-    vector: List[float] = Field(..., description="Lab values of the dominant color")
-    percentage: float = Field(..., description="Percentage of the image this color occupies")
+    color: Link["Color"]
+    percentage: float
 
 class Dimensions(BaseModel):
     width: int = Field(..., description="Width of the image in pixels")
@@ -72,6 +72,7 @@ class Image(Document):
             }
         }
 
+from .color import Color
 from .face import Face
 from .organization import Organization
 from .product import Product

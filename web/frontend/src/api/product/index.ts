@@ -4,7 +4,7 @@ import CreateProductAPI from './createAPI';
 import GetProductsAPI from './getAPI';
 import ImageGroupAPI from './imageGroupAPI';
 import { useAPI } from '@/api';
-
+import { useMemo } from 'react';
 export class ProductAPI {
   private createProductAPI: CreateProductAPI;
   private getProductsAPI: GetProductsAPI;
@@ -53,7 +53,8 @@ export class ProductAPI {
   }
 }
 
-export function useProductAPI() {
-  const api = useAPI();
-  return api.createProductAPI();
-}
+    // Start of Selection
+    export function useProductAPI() {
+      const api = useAPI();
+      return useMemo(() => api.createProductAPI(), [api]);
+    }

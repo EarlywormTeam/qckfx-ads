@@ -1,3 +1,4 @@
+from .color import Color
 from .face import Face
 from .generation_job import GenerationJob
 from .generated_image import GeneratedImage, ImageStatus
@@ -29,6 +30,7 @@ async def init_beanie_models():
     await init_beanie(
         database=client.qckfx,
         document_models=[
+            Color,
             Face,
             GenerationJob,
             GeneratedImage,
